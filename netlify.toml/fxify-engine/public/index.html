@@ -1,0 +1,2102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Fxify — Content Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ── RESET & BASE ─────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{font-size:16px;-webkit-text-size-adjust:100%;}
+body{font-family:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f8fafc;color:#0f172a;min-height:100vh;overflow-x:hidden;}
+input,select,textarea,button{font-family:inherit;}
+img{display:block;max-width:100%;}
+
+/* ── TOKENS ──────────────────────────────────────── */
+:root{
+--navy:#08111f; --navy2:#0c1a2e; --navy3:#112240;
+--teal:#0a9d8a; --tealB:#0ec4ad; --tealL:#e0faf7;
+--blue:#1a56db; --blueL:#eff6ff; --blueM:#dbeafe;
+--surface:#ffffff; --bg:#f8fafc; --bg2:#f1f5f9;
+--border:#e2e8f0; --border2:#cbd5e1;
+--text:#0f172a; --text2:#334155; --muted:#64748b;
+--urgent:#ef4444; --urgentL:#fef2f2;
+--high:#f97316; --highL:#fff7ed;
+--green:#059669; --greenL:#ecfdf5;
+--amber:#d97706; --amberL:#fef9c3;
+--purple:#7c3aed; --purpleL:#f5f3ff;
+--radius:10px; --radius-lg:14px; --radius-xl:18px;
+--shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+--shadow-md:0 4px 12px rgba(0,0,0,.08);
+--topbar-h:56px;
+--sidebar-w:220px;
+}
+
+/* ── SCREENS ──────────────────────────────────────── */
+.screen{display:none;}
+.screen.active{display:flex;flex-direction:column;min-height:100vh;}
+
+/* ══════════════════════════════════════════════════
+LOGIN
+══════════════════════════════════════════════════ */
+#login{
+background:var(--navy);
+align-items:center;justify-content:center;
+padding:env(safe-area-inset-top,20px) 16px env(safe-area-inset-bottom,20px);
+position:relative;overflow:hidden;
+}
+#login::before{
+content:'';position:absolute;inset:0;
+background:repeating-linear-gradient(0deg,transparent,transparent 48px,rgba(14,196,173,.04) 48px,rgba(14,196,173,.04) 50px);
+pointer-events:none;
+}
+.login-glow{position:absolute;border-radius:50%;pointer-events:none;}
+.login-glow-1{width:clamp(300px,60vw,600px);height:clamp(300px,60vw,600px);top:-20%;right:-15%;background:radial-gradient(circle,rgba(10,157,138,.1),transparent 70%);}
+.login-glow-2{width:clamp(200px,40vw,400px);height:clamp(200px,40vw,400px);bottom:-10%;left:-10%;background:radial-gradient(circle,rgba(26,86,219,.08),transparent 70%);}
+
+.login-card{
+position:relative;z-index:1;
+background:rgba(12,26,46,.96);
+border:1px solid rgba(14,196,173,.16);
+border-radius:var(--radius-xl);
+padding:clamp(28px,5vw,48px) clamp(20px,5vw,44px);
+width:100%;max-width:420px;
+text-align:center;
+}
+.login-logo-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:4px;}
+.login-lines{display:flex;flex-direction:column;gap:3.5px;}
+.login-lines span{display:block;background:#fff;border-radius:1px;}
+.login-lines span:nth-child(1){width:24px;height:3px;}
+.login-lines span:nth-child(2){width:17px;height:3px;}
+.login-lines span:nth-child(3){width:10px;height:3px;}
+.login-wordmark{font-family:'Barlow Condensed','Georgia',sans-serif;font-size:clamp(24px,4vw,32px);font-weight:800;color:#fff;letter-spacing:.12em;text-transform:uppercase;}
+.login-label{font-size:11px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--tealB);margin-bottom:28px;}
+.login-role-label{font-size:12px;color:#475569;margin-bottom:12px;}
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.role-btn{
+padding:14px 8px;
+border-radius:var(--radius);
+border:1px solid rgba(255,255,255,.08);
+background:rgba(255,255,255,.04);
+color:#94a3b8;font-size:13px;font-weight:500;
+cursor:pointer;transition:.2s;
+}
+.role-btn .ri{font-size:18px;display:block;margin-bottom:5px;}
+.role-btn:hover{border-color:rgba(14,196,173,.3);background:rgba(14,196,173,.06);color:#cbd5e1;}
+.role-btn.active{border-color:rgba(14,196,173,.45);background:rgba(14,196,173,.1);color:var(--tealB);}
+.g-btn{
+width:100%;padding:13px;
+border-radius:var(--radius);
+border:1px solid rgba(255,255,255,.1);
+background:rgba(255,255,255,.06);
+color:#fff;font-size:14px;font-weight:500;
+cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;
+transition:.2s;margin-bottom:12px;
+}
+.g-btn:hover{background:rgba(255,255,255,.1);border-color:rgba(14,196,173,.35);}
+.login-note{font-size:11px;color:#475569;line-height:1.5;}
+.login-note strong{color:var(--tealB);}
+
+/* ══════════════════════════════════════════════════
+TOPBAR
+══════════════════════════════════════════════════ */
+.topbar{
+position:sticky;top:0;z-index:200;
+background:var(--navy);
+height:var(--topbar-h);
+display:flex;align-items:center;justify-content:space-between;
+padding:0 clamp(12px,3vw,24px);
+border-bottom:1px solid rgba(14,196,173,.09);
+flex-shrink:0;
+}
+.tb-left{display:flex;align-items:center;gap:12px;min-width:0;}
+.tb-logo{display:flex;align-items:center;gap:8px;cursor:pointer;text-decoration:none;flex-shrink:0;}
+.tb-bars{display:flex;flex-direction:column;gap:2.5px;}
+.tb-bars span{display:block;background:#fff;border-radius:1px;}
+.tb-bars span:nth-child(1){width:15px;height:2.5px;}
+.tb-bars span:nth-child(2){width:10px;height:2.5px;}
+.tb-bars span:nth-child(3){width:6px;height:2.5px;}
+.tb-name-mark{font-family:'Barlow Condensed','Georgia',sans-serif;font-size:16px;font-weight:800;color:#fff;letter-spacing:.12em;text-transform:uppercase;}
+.tb-sep{width:1px;height:18px;background:rgba(255,255,255,.1);}
+.tb-ctx{font-size:12px;color:#475569;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;}
+.tb-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.tb-user{font-size:13px;color:#94a3b8;display:none;}
+@media(min-width:480px){.tb-user{display:block;}}
+.tb-avatar{
+width:30px;height:30px;border-radius:50%;
+display:flex;align-items:center;justify-content:center;
+font-size:11px;font-weight:600;color:#fff;cursor:pointer;
+flex-shrink:0;background:linear-gradient(135deg,var(--teal),var(--tealB));
+}
+.tb-avatar.blue{background:linear-gradient(135deg,var(--blue),#2563eb);}
+.tb-notif{
+width:30px;height:30px;border-radius:8px;
+border:1px solid rgba(255,255,255,.08);background:transparent;
+display:flex;align-items:center;justify-content:center;
+cursor:pointer;position:relative;font-size:13px;
+}
+.tb-dot{width:6px;height:6px;background:var(--urgent);border-radius:50%;position:absolute;top:5px;right:5px;border:1.5px solid var(--navy);}
+.menu-toggle{
+display:flex;flex-direction:column;gap:4px;
+width:32px;height:32px;border:1px solid rgba(255,255,255,.08);
+border-radius:8px;background:transparent;cursor:pointer;
+align-items:center;justify-content:center;padding:0;
+}
+.menu-toggle span{display:block;width:14px;height:2px;background:#94a3b8;border-radius:1px;}
+@media(min-width:768px){.menu-toggle{display:none;}}
+
+/* ══════════════════════════════════════════════════
+LAYOUT
+══════════════════════════════════════════════════ */
+.app-wrap{display:flex;flex:1;overflow:hidden;position:relative;}
+
+.sidebar{z-index:150;
+width:var(--sidebar-w);flex-shrink:0;
+background:var(--navy2);
+border-right:1px solid rgba(14,196,173,.07);
+display:flex;flex-direction:column;
+overflow-y:auto;
+transition:transform .25s ease;
+position:fixed;top:var(--topbar-h);bottom:0;left:0;z-index:150;
+transform:translateX(-100%);
+padding:12px 0 24px;
+}
+.sidebar.open{transform:translateX(0);}
+@media(min-width:768px){
+.sidebar{z-index:150;position:relative;top:auto;bottom:auto;transform:none;flex-shrink:0;}
+}
+.sidebar-overlay{
+display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:140;
+}
+.sidebar-overlay.show{display:block;}
+@media(min-width:768px){.sidebar-overlay{display:none!important;}}
+
+.nav-section{padding:0 0 4px;}
+.nav-grp-label{font-size:9px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#334155;padding:10px 18px 5px;}
+.nav-link{
+display:flex;align-items:center;gap:10px;
+padding:9px 18px;
+font-size:13px;color:#64748b;
+cursor:pointer;transition:.15s;
+border-left:2px solid transparent;
+}
+.nav-link:hover{color:#cbd5e1;background:rgba(255,255,255,.03);} .sidebar.open .nav-link{display:flex;}
+@media(max-width:767px){
+  .sidebar{padding-top:8px;}
+  .sidebar.open{box-shadow:4px 0 20px rgba(0,0,0,.3);}
+  .nav-link{padding:11px 18px;}
+}
+.nav-link.active{color:var(--tealB);background:rgba(14,196,173,.07);border-left-color:var(--tealB);}
+.nav-ico{font-size:13px;width:17px;text-align:center;flex-shrink:0;}
+.nav-badge{
+margin-left:auto;background:var(--teal);color:#fff;
+font-size:10px;font-weight:600;padding:1px 6px;border-radius:20px;
+}
+.nav-divider{height:1px;background:rgba(255,255,255,.05);margin:6px 14px;}
+
+.main-area{
+flex:1;overflow-y:auto;
+background:var(--bg);
+min-width:0;
+}
+
+/* ══════════════════════════════════════════════════
+PAGE CONTENT
+══════════════════════════════════════════════════ */
+.page-wrap{display:none;padding:clamp(16px,3vw,28px) clamp(14px,3vw,28px);}
+.page-wrap.active{display:block;}
+
+.pg-head{font-family:'Barlow Condensed','Georgia',sans-serif;font-size:clamp(20px,3vw,26px);font-weight:800;color:var(--text);margin-bottom:3px;letter-spacing:.04em;text-transform:uppercase;}
+.pg-sub{font-size:13px;color:var(--muted);font-weight:400;margin-bottom:20px;line-height:1.5;}
+
+/* greeting */
+.greeting{font-family:'Barlow Condensed','Georgia',sans-serif;font-size:clamp(22px,3.5vw,30px);font-weight:800;color:var(--text);line-height:1.15;margin-bottom:5px;letter-spacing:.03em;}
+.greeting-sub{font-size:13px;color:var(--muted);font-weight:300;margin-bottom:20px;line-height:1.5;}
+
+/* stats */
+.stats-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px;}
+@media(min-width:480px){.stats-row{grid-template-columns:repeat(4,1fr);}}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;position:relative;overflow:hidden;}
+.stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--radius-lg) var(--radius-lg) 0 0;}
+.sc-urgent::after{background:var(--urgent);}
+.sc-blue::after{background:var(--blue);}
+.sc-teal::after{background:var(--tealB);}
+.sc-green::after{background:var(--green);}
+.sc-purple::after{background:var(--purple);}
+.sc-amber::after{background:var(--amber);}
+.stat-label{font-size:11px;color:var(--muted);margin-bottom:5px;}
+.stat-val{font-family:'Barlow Condensed','Georgia',sans-serif;font-size:clamp(22px,3vw,28px);font-weight:800;color:var(--text);line-height:1;}
+.stat-hint{font-size:11px;color:var(--muted);margin-top:3px;font-weight:300;}
+
+/* section header */
+.sec-head{
+font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+margin-bottom:12px;display:flex;align-items:center;gap:8px;
+}
+.sec-head::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* badges */
+.badge{display:inline-flex;align-items:center;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap;letter-spacing:.02em;}
+.bd-urgent{background:var(--urgentL);color:var(--urgent);}
+.bd-high{background:var(--highL);color:var(--high);}
+.bd-normal{background:var(--blueL);color:var(--blue);}
+.bd-low{background:var(--bg2);color:var(--muted);border:1px solid var(--border);}
+.bd-green{background:var(--greenL);color:var(--green);}
+.bd-purple{background:var(--purpleL);color:var(--purple);}
+.bd-teal{background:var(--tealL);color:var(--teal);}
+.bd-amber{background:var(--amberL);color:var(--amber);}
+
+/* article cards */
+.art-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:10px;overflow:hidden;cursor:pointer;transition:border-color .15s,box-shadow .15s;}
+.art-card:hover{border-color:var(--teal);box-shadow:0 0 0 3px rgba(10,157,138,.06);}
+.art-card.pr-urgent{border-left:3px solid var(--urgent);}
+.art-card.pr-high{border-left:3px solid var(--high);}
+.art-card.pr-purple{border-left:3px solid var(--purple);}
+.card-body{padding:14px 14px 10px;}
+.card-top-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px;}
+.card-title{font-size:14px;font-weight:500;color:var(--text);line-height:1.4;flex:1;}
+.card-badges{display:flex;gap:5px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;}
+.intent-block{background:var(--navy);border-radius:8px;padding:10px 12px;margin:0 14px 10px;}
+.intent-tag{font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--tealB);margin-bottom:3px;}
+.intent-text{font-size:12px;color:#94a3b8;font-weight:300;line-height:1.5;}
+.card-meta-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:0 14px 10px;}
+.meta-kw{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--blueL);color:var(--blue);font-weight:400;}
+.meta-time{font-size:11px;color:var(--muted);}
+.meta-due{font-size:11px;font-weight:500;}
+.due-u{color:var(--urgent);}
+.due-s{color:var(--amber);}
+.due-o{color:var(--green);}
+.card-footer{padding:10px 14px;border-top:1px solid var(--bg2);background:var(--bg2);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.card-footer-info{font-size:11px;color:var(--muted);}
+
+/* buttons */
+.btn{
+display:inline-flex;align-items:center;justify-content:center;gap:6px;
+padding:7px 14px;border-radius:var(--radius);
+border:1px solid var(--border);background:var(--surface);
+color:var(--text);font-size:12px;font-weight:500;
+cursor:pointer;transition:.15s;white-space:nowrap;
+font-family:inherit;
+}
+.btn:hover{background:var(--navy);color:#fff;border-color:var(--navy);}
+.btn-primary{background:var(--tealB);color:#fff;border-color:var(--tealB);}
+.btn-primary:hover{background:var(--teal);}
+.btn-blue{background:var(--blue);color:#fff;border-color:var(--blue);}
+.btn-blue:hover{background:#1e40af;}
+.btn-ghost{background:transparent;border:1px solid #334155;color:#94a3b8;}
+.btn-ghost:hover{border-color:#475569;color:#fff;}
+.btn-danger{background:transparent;border:1px solid rgba(239,68,68,.3);color:var(--urgent);}
+.btn-danger:hover{background:var(--urgentL);}
+.btn-sm{padding:5px 10px;font-size:11px;}
+.btn-full{width:100%;justify-content:center;padding:11px;}
+
+/* goals */
+.goals-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:20px;}
+.goals-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.goals-title{font-size:13px;font-weight:500;color:var(--text);}
+.goals-sub{font-size:11px;color:var(--muted);}
+.goal-item{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.goal-item:last-child{margin-bottom:0;}
+.goal-lbl{font-size:12px;color:var(--text2);width:120px;flex-shrink:0;}
+.goal-track{flex:1;background:var(--bg2);border-radius:20px;height:5px;overflow:hidden;}
+.goal-bar{height:100%;border-radius:20px;transition:width .4s;}
+.goal-val{font-size:11px;font-weight:500;width:34px;text-align:right;flex-shrink:0;}
+
+/* form elements */
+.form-label{display:block;font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+.form-input{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;color:var(--text);background:var(--surface);outline:none;transition:border-color .15s;font-family:inherit;}
+.form-input:focus{border-color:var(--tealB);}
+select.form-input{cursor:pointer;}
+.form-row{display:grid;grid-template-columns:1fr;gap:12px;}
+@media(min-width:480px){.form-row{grid-template-columns:1fr 1fr;}}
+.form-group{margin-bottom:14px;}
+
+/* tone selector */
+.tone-options{display:flex;gap:6px;flex-wrap:wrap;}
+.tone-opt{padding:5px 12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);font-size:12px;cursor:pointer;font-family:inherit;transition:.15s;}
+.tone-opt.active,.tone-opt:hover{background:var(--tealL);border-color:var(--tealB);color:var(--teal);}
+
+/* result banner */
+.result-banner{background:var(--greenL);border:1px solid #6ee7b7;border-radius:var(--radius-lg);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px;}
+.result-text p:first-child{font-size:13px;font-weight:500;color:var(--green);}
+.result-text p:last-child{font-size:12px;color:var(--green);font-weight:300;margin-top:2px;}
+
+/* pipeline board */
+.pipeline-board{display:grid;grid-template-columns:repeat(5,minmax(160px,1fr));gap:10px;overflow-x:auto;padding-bottom:4px;}
+@media(max-width:900px){.pipeline-board{grid-template-columns:repeat(3,minmax(150px,1fr));}}
+@media(max-width:600px){.pipeline-board{grid-template-columns:repeat(2,minmax(140px,1fr));}}
+.pipeline-col{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;min-height:200px;}
+.pipe-head{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.pipe-label{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;}
+.pipe-count{font-size:10px;font-weight:600;background:var(--bg2);color:var(--muted);padding:1px 6px;border-radius:20px;}
+.pipe-body{padding:8px;}
+.pipe-card{background:var(--bg2);border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer;border:1px solid transparent;transition:.15s;}
+.pipe-card:hover{border-color:var(--tealB);}
+.pipe-card:last-child{margin-bottom:0;}
+.pipe-title{font-size:12px;font-weight:500;color:var(--text);margin-bottom:4px;line-height:1.35;}
+.pipe-meta{display:flex;align-items:center;justify-content:space-between;}
+.pipe-writer{font-size:10px;color:var(--muted);}
+
+/* topic clusters */
+.cluster-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:12px;overflow:hidden;}
+.cluster-header{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);cursor:pointer;}
+.cluster-name{font-size:14px;font-weight:500;color:var(--text);}
+.cluster-meta{font-size:11px;color:var(--muted);margin-top:2px;}
+.cluster-body{overflow-x:auto;}
+.cluster-table{width:100%;min-width:500px;}
+.cluster-row{display:flex;align-items:center;gap:8px;padding:9px 16px;border-bottom:1px solid var(--bg2);font-size:12px;}
+.cluster-row:last-child{border-bottom:none;}
+.ct-title{flex:1;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ct-kw{font-size:10px;color:var(--blue);background:var(--blueL);padding:2px 7px;border-radius:20px;white-space:nowrap;}
+.ct-intent{font-size:10px;color:var(--muted);white-space:nowrap;}
+
+/* analytics */
+.an-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px;}
+@media(min-width:640px){.an-grid{grid-template-columns:repeat(3,1fr);}}
+.an-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;}
+.an-label{font-size:11px;color:var(--muted);margin-bottom:4px;}
+.an-val{font-family:'Barlow Condensed','Georgia',sans-serif;font-size:clamp(22px,3vw,28px);font-weight:800;color:var(--text);margin-bottom:3px;line-height:1;}
+.an-change{font-size:11px;font-weight:500;}
+.ch-up{color:var(--green);}
+.ch-dn{color:var(--urgent);}
+
+/* table */
+.data-table{width:100%;min-width:500px;border-collapse:collapse;}
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;overflow-x:auto;}
+.data-table th{padding:10px 14px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--bg2);border-bottom:1px solid var(--border);}
+.data-table td{padding:11px 14px;font-size:13px;color:var(--text);border-bottom:1px solid var(--bg2);}
+.data-table tr:last-child td{border-bottom:none;}
+.data-table tr:hover td{background:var(--bg);}
+
+/* writer cards */
+.writer-grid{display:grid;grid-template-columns:1fr;gap:12px;}
+@media(min-width:640px){.writer-grid{grid-template-columns:repeat(2,1fr);}}
+@media(min-width:960px){.writer-grid{grid-template-columns:repeat(3,1fr);}}
+.writer-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;}
+.writer-top{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.w-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;flex-shrink:0;}
+.w-name{font-size:14px;font-weight:500;color:var(--text);}
+.w-email{font-size:11px;color:var(--muted);}
+
+/* ══════════════════════════════════════════════════
+EDITOR
+══════════════════════════════════════════════════ */
+#editor{background:var(--surface);}
+.ed-topbar{
+background:var(--navy);height:var(--topbar-h);
+display:flex;align-items:center;justify-content:space-between;
+padding:0 clamp(12px,3vw,20px);gap:10px;
+border-bottom:1px solid rgba(14,196,173,.09);
+flex-shrink:0;position:sticky;top:0;z-index:200;
+}
+.ed-bc{display:flex;align-items:center;gap:7px;font-size:12px;color:#475569;flex:1;min-width:0;}
+.ed-bc .active{color:#fff;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ed-actions{display:flex;gap:6px;align-items:center;flex-shrink:0;}
+.autosave-txt{font-size:11px;color:#334155;display:none;}
+@media(min-width:540px){.autosave-txt{display:block;}}
+.ed-layout{display:flex;flex:1;overflow:hidden;flex-direction:column;}
+@media(min-width:768px){.ed-layout{flex-direction:row;}} @media(min-width:960px){.ed-seo-panel{width:200px;min-width:200px;}} @media(min-width:1100px){.ed-seo-panel{width:240px;min-width:240px;}}
+.ed-sidebar{
+background:var(--navy2);
+border-bottom:1px solid rgba(14,196,173,.07);
+padding:14px;
+display:flex;gap:12px;flex-wrap:wrap;
+overflow-y:auto;
+}
+@media(min-width:768px){
+.ed-sidebar{
+width:230px;min-width:230px;flex-shrink:0;
+border-bottom:none;border-right:1px solid rgba(14,196,173,.07);
+flex-direction:column;flex-wrap:nowrap;gap:14px;
+max-height:calc(100vh - var(--topbar-h));
+}
+}
+.es-block{min-width:110px;}
+@media(min-width:768px){.es-block{min-width:unset;width:100%;}}
+.es-label{font-size:9px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#334155;margin-bottom:5px;}
+.es-val{font-size:13px;color:#cbd5e1;}
+.es-chip{display:inline-block;font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;margin-top:2px;}
+.es-kw{background:rgba(14,196,173,.15);color:var(--tealB);}
+.es-due{background:rgba(217,119,6,.15);color:#fbbf24;}
+.wc-track{background:#1e3a5f;border-radius:4px;height:5px;overflow:hidden;margin-top:5px;}
+.wc-fill{background:var(--tealB);height:100%;border-radius:4px;width:91%;}
+.wc-txt{font-size:11px;color:#475569;margin-top:3px;}
+.es-div{height:1px;background:rgba(255,255,255,.04);width:100%;display:none;}
+@media(min-width:768px){.es-div{display:block;}}
+.check-list{}
+.check-item{display:flex;align-items:center;gap:7px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px;color:#64748b;cursor:pointer;font-weight:300;}
+.check-item:last-child{border-bottom:none;}
+.check-box{width:14px;height:14px;min-width:14px;border-radius:3px;border:1px solid #334155;display:flex;align-items:center;justify-content:center;font-size:9px;transition:.15s;}
+.check-box.checked{background:var(--teal);border-color:var(--teal);color:#fff;}
+.ed-canvas{flex:1;overflow-y:auto;padding:clamp(20px,4vw,40px) clamp(16px,6vw,56px);}
+.art-title-input{
+font-family:'Barlow Condensed','Georgia',sans-serif;font-size:clamp(20px,3vw,28px);font-weight:800;
+color:var(--text);border:none;outline:none;width:100%;background:transparent;
+margin-bottom:18px;line-height:1.2;letter-spacing:.03em;text-transform:uppercase;
+}
+.art-intent-box{background:var(--navy);border-radius:var(--radius);padding:12px 16px;margin-bottom:22px;}
+.art-intent-box .intent-tag{font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--tealB);margin-bottom:4px;}
+.art-intent-box p{font-size:13px;color:#94a3b8;font-weight:300;line-height:1.6;}
+.art-content{font-size:15px;line-height:1.85;color:var(--text2);font-weight:300;}
+.art-content h2{font-family:'Barlow Condensed','Georgia',sans-serif;font-size:19px;font-weight:700;color:var(--text);margin:22px 0 10px;letter-spacing:.04em;text-transform:uppercase;}
+.art-content p{margin-bottom:14px;}
+.cursor{display:inline-block;width:2px;height:15px;background:var(--tealB);animation:blink 1s step-end infinite;vertical-align:text-bottom;}
+@keyframes blink{50%{opacity:0;}}
+
+/* prompts page */
+.prompt-box{background:var(--navy);border-radius:var(--radius-lg);padding:16px;overflow-x:auto;}
+.prompt-box pre{font-family:'Courier New',monospace;font-size:12px;line-height:1.8;color:#94a3b8;white-space:pre-wrap;word-break:break-word;}
+.pt-var{color:#f59e0b;}
+.pt-comment{color:#475569;}
+.pt-text{color:#94a3b8;}
+
+/* toast */
+.toast{
+position:fixed;bottom:clamp(16px,4vw,24px);left:50%;
+transform:translateX(-50%) translateY(80px);
+background:var(--navy);color:var(--tealB);
+border:1px solid rgba(14,196,173,.22);border-radius:var(--radius);
+padding:10px 18px;font-size:13px;font-weight:500;
+opacity:0;transition:.3s;z-index:500;
+white-space:nowrap;max-width:90vw;text-align:center;
+}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+
+
+/* ══════════════════════════════════════════════════
+THREE-PANEL EDITOR
+══════════════════════════════════════════════════ */
+.ed-layout{display:flex;flex:1;overflow:hidden;flex-direction:column;}
+@media(min-width:900px){.ed-layout{flex-direction:row;}}
+
+/* Left scores sidebar */
+.ed-sidebar{
+background:var(--navy2);border-bottom:1px solid rgba(14,196,173,.07);
+padding:14px;display:flex;gap:12px;flex-wrap:wrap;overflow-y:auto;
+}
+@media(min-width:900px){
+.ed-sidebar{width:220px;min-width:220px;flex-shrink:0;border-bottom:none;
+border-right:1px solid rgba(14,196,173,.07);flex-direction:column;
+flex-wrap:nowrap;gap:14px;max-height:calc(100vh - var(--topbar-h));}
+}
+
+/* Centre canvas */
+.ed-canvas{flex:1;overflow-y:auto;background:#fff;min-width:0;}
+
+/* Right SEO panel */
+.ed-seo-panel{
+width:260px;min-width:260px;flex-shrink:0;
+background:var(--bg);border-left:1px solid var(--border);
+overflow-y:auto;padding:16px;display:none;
+}
+@media(min-width:960px){.ed-seo-panel{display:block;}}
+
+/* Article blog format */
+.art-featured-img{
+width:100%;height:200px;background:linear-gradient(135deg,var(--navy) 0%,var(--navy3) 100%);
+display:flex;align-items:center;justify-content:center;
+font-size:12px;color:#334155;letter-spacing:.08em;text-transform:uppercase;
+position:relative;overflow:hidden;flex-shrink:0;
+}
+.art-featured-img::after{
+content:'';position:absolute;inset:0;
+background:repeating-linear-gradient(45deg,transparent,transparent 20px,rgba(14,196,173,.03) 20px,rgba(14,196,173,.03) 21px);
+}
+.art-featured-img span{position:relative;z-index:1;color:#334155;}
+.art-meta-bar{display:flex;align-items:center;gap:10px;padding:14px 40px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.art-meta-tag{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;background:var(--tealL);color:var(--teal);}
+.art-meta-info{font-size:11px;color:var(--muted);}
+.art-body{padding:28px 40px 60px;max-width:720px;}
+@media(max-width:600px){.art-body{padding:20px 18px 40px;}}
+
+/* Keyword highlights */
+.kw-primary{background:rgba(14,196,173,.18);border-radius:2px;padding:0 2px;}
+.kw-secondary{background:rgba(26,86,219,.12);border-radius:2px;padding:0 2px;}
+.kw-filler{text-decoration:underline;text-decoration-color:var(--urgent);text-decoration-style:wavy;}
+.kw-long{border-bottom:1px solid var(--amber);}
+
+/* Article typography */
+.art-body h1{font-family:'Barlow Condensed','Georgia',sans-serif;font-size:clamp(22px,3vw,32px);font-weight:800;color:var(--text);line-height:1.15;margin-bottom:16px;letter-spacing:.02em;}
+.art-body .art-deck{font-size:16px;color:var(--muted);line-height:1.7;margin-bottom:24px;border-left:3px solid var(--tealB);padding-left:14px;font-weight:300;}
+.art-body h2{font-family:'Barlow Condensed','Georgia',sans-serif;font-size:20px;font-weight:700;color:var(--text);margin:32px 0 12px;letter-spacing:.03em;text-transform:uppercase;}
+.art-body h3{font-size:15px;font-weight:600;color:var(--text);margin:20px 0 8px;}
+.art-body p{font-size:15px;line-height:1.85;color:var(--text2);margin-bottom:16px;font-weight:300;}
+.art-body ul,.art-body ol{padding-left:20px;margin-bottom:16px;}
+.art-body li{font-size:15px;line-height:1.7;color:var(--text2);margin-bottom:6px;font-weight:300;}
+.art-pull-quote{background:var(--navy);border-left:3px solid var(--tealB);border-radius:0 var(--radius) var(--radius) 0;padding:16px 20px;margin:24px 0;font-size:16px;font-style:italic;color:#94a3b8;line-height:1.6;}
+.art-internal-link{color:var(--blue);text-decoration:underline;cursor:pointer;position:relative;}
+.art-internal-link::after{content:'↗';font-size:10px;vertical-align:super;margin-left:2px;}
+.art-cta-box{background:linear-gradient(135deg,var(--navy),var(--navy3));border:1px solid rgba(14,196,173,.2);border-radius:var(--radius-lg);padding:20px 24px;margin:28px 0;text-align:center;}
+.art-cta-box p{font-size:14px;color:#94a3b8;margin-bottom:12px;font-weight:300;}
+.art-cta-box .btn{background:var(--tealB);color:#fff;border:none;padding:10px 24px;font-size:13px;}
+.art-img-placeholder{width:100%;height:140px;background:var(--bg2);border-radius:var(--radius);border:1px dashed var(--border2);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);margin:20px 0;letter-spacing:.06em;text-transform:uppercase;}
+.art-key-takeaways{background:var(--greenL);border:1px solid #6ee7b7;border-radius:var(--radius-lg);padding:16px 20px;margin:24px 0;}
+.art-key-takeaways p{font-size:11px;font-weight:600;color:var(--green);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;}
+.art-key-takeaways li{font-size:13px;color:var(--green);margin-bottom:5px;font-weight:400;}
+
+/* Right SEO panel */
+.seo-section{margin-bottom:20px;}
+.seo-section-title{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.seo-section-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.kw-occurrence{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-bottom:4px;font-size:11px;}
+.kw-count{font-weight:600;color:var(--tealB);}
+.lsi-chip{display:inline-flex;font-size:10px;padding:2px 8px;border-radius:20px;margin:2px;background:var(--bg2);color:var(--muted);border:1px solid var(--border);cursor:pointer;}
+.lsi-chip.missing{border-color:rgba(239,68,68,.3);color:var(--urgent);background:var(--urgentL);}
+.lsi-chip.present{border-color:rgba(5,150,105,.3);color:var(--green);background:var(--greenL);}
+.readability-bar{height:6px;border-radius:3px;background:var(--bg2);overflow:hidden;margin:6px 0;}
+.readability-fill{height:100%;border-radius:3px;background:var(--green);width:74%;}
+.paa-item{padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-bottom:5px;font-size:11px;color:var(--text2);cursor:pointer;transition:.15s;}
+.paa-item:hover{border-color:var(--tealB);}
+.paa-item.covered{border-color:rgba(5,150,105,.3);background:var(--greenL);color:var(--green);}
+.internal-suggest{padding:7px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-bottom:4px;font-size:11px;color:var(--blue);cursor:pointer;display:flex;align-items:center;gap:6px;transition:.15s;}
+.internal-suggest:hover{background:var(--blueL);}
+.schema-box{background:var(--navy);border-radius:var(--radius);padding:10px;font-family:'Courier New',monospace;font-size:10px;color:#64748b;line-height:1.6;overflow-x:auto;}
+.schema-box .sk{color:#f59e0b;}
+.schema-box .sv{color:#94a3b8;}
+
+
+/* ── REVIEWER TOOLBAR ────────────────────────────────── */
+.reviewer-bar{
+  background:var(--navy3);
+  border-bottom:1px solid rgba(14,196,173,.1);
+  padding:10px clamp(16px,4vw,56px);
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+}
+.reviewer-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#475569;flex-shrink:0;}
+.reviewer-note{flex:1;min-width:200px;padding:7px 11px;border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);font-size:12px;color:#cbd5e1;background:rgba(255,255,255,.04);outline:none;font-family:inherit;}
+.reviewer-note::placeholder{color:#334155;}
+.reviewer-note:focus{border-color:rgba(14,196,173,.3);}
+.reviewer-actions{display:flex;gap:6px;flex-shrink:0;}
+
+/* ── COMMENT MODAL ───────────────────────────────────── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:400;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:var(--surface);border-radius:var(--radius-xl);padding:24px;width:100%;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.modal-title{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:var(--text);margin-bottom:6px;letter-spacing:.04em;}
+.modal-sub{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.5;}
+.modal-textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;color:var(--text);font-family:inherit;resize:vertical;min-height:100px;outline:none;transition:border-color .15s;}
+.modal-textarea:focus{border-color:var(--tealB);}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;}
+
+/* scrollbar */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:#334155;border-radius:2px;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login" class="screen active">
+  <div class="login-glow login-glow-1"></div>
+  <div class="login-glow login-glow-2"></div>
+  <div class="login-card">
+    <div class="login-logo-row">
+      <div class="login-lines"><span></span><span></span><span></span></div>
+      <div class="login-wordmark">FXIFY</div>
+    </div>
+    <p class="login-label">Content Engine</p>
+    <p class="login-role-label">Select your role</p>
+    <div class="role-grid" style="grid-template-columns:1fr 1fr;">
+      <div class="role-btn active"><span class="ri">⚡</span>Admin</div>
+      <div class="role-btn"><span class="ri">✍️</span>Writer</div>
+      <div class="role-btn"><span class="ri">🔍</span>SEO Review</div>
+      <div class="role-btn"><span class="ri">✅</span>Manager</div>
+    </div>
+    <button class="g-btn">
+      <svg width="16" height="16" viewBox="0 0 16 16"><path d="M15.68 8.18c0-.57-.05-1.11-.14-1.64H8v3.1h4.31a3.68 3.68 0 01-1.6 2.42v2h2.58c1.51-1.39 2.38-3.44 2.38-5.88z" fill="#4285F4"/><path d="M8 16c2.16 0 3.97-.72 5.29-1.94l-2.58-2A4.8 4.8 0 018 12.75a4.8 4.8 0 01-4.52-3.32H.83v2.07A8 8 0 008 16z" fill="#34A853"/><path d="M3.48 9.43A4.84 4.84 0 013.23 8c0-.52.09-1.02.25-1.49V4.44H.83A8 8 0 000 8c0 1.29.31 2.51.83 3.56l2.65-2.13z" fill="#FBBC05"/><path d="M8 3.18c1.22 0 2.31.42 3.17 1.24l2.37-2.37A8 8 0 008 0 8 8 0 00.83 4.44l2.65 2.07A4.8 4.8 0 018 3.18z" fill="#EA4335"/></svg>
+      Continue with Google
+    </button>
+    <p class="login-note">Access restricted to <strong>@fxify.com</strong> accounts</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════ ADMIN ═══════════════════════ -->
+<div id="admin" class="screen">
+  <div class="topbar">
+    <div class="tb-left">
+      <button class="menu-toggle" id="admin-menu-btn" aria-label="Menu"><span></span><span></span><span></span></button>
+      <a class="tb-logo" id="admin-logo"><div class="tb-bars"><span></span><span></span><span></span></div><div class="tb-name-mark">FXIFY</div></a>
+      <div class="tb-sep"></div><span class="tb-ctx">Admin</span>
+    </div>
+    <div class="tb-right">
+      <div class="tb-notif">🔔<div class="tb-dot"></div></div>
+      <span class="tb-user">Sheperd M.</span>
+      <div class="tb-avatar blue">SM</div>
+    </div>
+  </div>
+  <div class="app-wrap">
+    <div class="sidebar-overlay" id="admin-overlay"></div>
+    <nav class="sidebar" id="admin-sidebar">
+      <div class="nav-section">
+        <div class="nav-grp-label">Pipeline</div>
+        <div class="nav-link active" data-page="a-pipeline" data-screen="admin"><span class="nav-ico">◈</span>Pipeline<span class="nav-badge">12</span></div>
+        <div class="nav-link" data-page="a-generate" data-screen="admin"><span class="nav-ico">⚡</span>Generate Draft</div>
+        <div class="nav-link" data-page="a-review" data-screen="admin"><span class="nav-ico">◎</span>Review Queue<span class="nav-badge">3</span></div>
+      </div>
+      <div class="nav-divider"></div>
+      <div class="nav-section">
+        <div class="nav-grp-label">SEO</div>
+        <div class="nav-link" data-page="a-clusters" data-screen="admin"><span class="nav-ico">✦</span>Topic Clusters</div>
+        <div class="nav-link" data-page="a-analytics" data-screen="admin"><span class="nav-ico">▲</span>Analytics</div>
+      </div>
+      <div class="nav-divider"></div>
+      <div class="nav-section">
+        <div class="nav-grp-label">Settings</div>
+        <div class="nav-link" data-page="a-writers" data-screen="admin"><span class="nav-ico">≡</span>Writers</div>
+        <div class="nav-link" data-page="a-prompts" data-screen="admin"><span class="nav-ico">⚙</span>Prompts</div>
+      </div>
+    </nav>
+    <div class="main-area">
+
+      <!-- PIPELINE -->
+      <div id="a-pipeline" class="page-wrap active">
+        <div class="pg-head">Content Pipeline</div>
+        <p class="pg-sub">All articles across the team — 7 stages from brief to live</p>
+        <div class="stats-row">
+          <div class="stat-card sc-urgent"><p class="stat-label">Needs attention</p><p class="stat-val" style="color:var(--urgent)">2</p><p class="stat-hint">overdue</p></div>
+          <div class="stat-card sc-blue"><p class="stat-label">In progress</p><p class="stat-val">7</p><p class="stat-hint">being written</p></div>
+          <div class="stat-card sc-teal"><p class="stat-label">In review</p><p class="stat-val">3</p><p class="stat-hint">with Sheperd</p></div>
+          <div class="stat-card sc-green"><p class="stat-label">Published this week</p><p class="stat-val">5</p><p class="stat-hint">articles live</p></div>
+        </div>
+        <div class="sec-head">Board</div>
+        <div class="pipeline-board" style="grid-template-columns:repeat(7,minmax(148px,1fr));">
+          <div class="pipeline-col">
+            <div class="pipe-head"><span class="pipe-label" style="color:var(--muted)">Briefed</span><span class="pipe-count">3</span></div>
+            <div class="pipe-body">
+              <div class="pipe-card"><p class="pipe-title">How to Build a Trading Routine</p><div class="pipe-meta"><span class="badge bd-normal">Normal</span><span class="pipe-writer">Unassigned</span></div></div>
+              <div class="pipe-card"><p class="pipe-title">What Is a Prop Firm?</p><div class="pipe-meta"><span class="badge bd-low">Low</span><span class="pipe-writer">Unassigned</span></div></div>
+              <div class="pipe-card"><p class="pipe-title">Crypto Trading on FXIFY</p><div class="pipe-meta"><span class="badge bd-normal">Normal</span><span class="pipe-writer">Unassigned</span></div></div>
+            </div>
+          </div>
+          <div class="pipeline-col">
+            <div class="pipe-head"><span class="pipe-label" style="color:var(--blue)">Drafting</span><span class="pipe-count">4</span></div>
+            <div class="pipe-body">
+              <div class="pipe-card" style="border-left:2px solid var(--urgent)"><p class="pipe-title">Pass Your Fxify Evaluation First Time</p><div class="pipe-meta"><span class="badge bd-urgent">Urgent</span><span class="pipe-writer">Fariha K.</span></div></div>
+              <div class="pipe-card" style="border-left:2px solid var(--high)"><p class="pipe-title">5 Risk Management Rules</p><div class="pipe-meta"><span class="badge bd-high">High</span><span class="pipe-writer">Harry H.</span></div></div>
+              <div class="pipe-card"><p class="pipe-title">EUR/USD Weekly Outlook</p><div class="pipe-meta"><span class="badge bd-normal">Normal</span><span class="pipe-writer">Imran N.</span></div></div>
+              <div class="pipe-card"><p class="pipe-title">Psychology of Losing Trades</p><div class="pipe-meta"><span class="badge bd-normal">Normal</span><span class="pipe-writer">Shatha A.</span></div></div>
+            </div>
+          </div>
+          <div class="pipeline-col">
+            <div class="pipe-head"><span class="pipe-label" style="color:var(--purple)">Sheperd Review</span><span class="pipe-count">3</span></div>
+            <div class="pipe-body">
+              <div class="pipe-card"><p class="pipe-title">Scalping on Funded Accounts</p><div class="pipe-meta"><span class="badge bd-high">High</span><span class="pipe-writer">Imran N.</span></div></div>
+              <div class="pipe-card"><p class="pipe-title">How Drawdown Works</p><div class="pipe-meta"><span class="badge bd-urgent">Urgent</span><span class="pipe-writer">Harry H.</span></div></div>
+              <div class="pipe-card"><p class="pipe-title">Best Trading Sessions</p><div class="pipe-meta"><span class="badge bd-normal">Normal</span><span class="pipe-writer">Mamnun A.</span></div></div>
+            </div>
+          </div>
+          <div class="pipeline-col">
+            <div class="pipe-head"><span class="pipe-label" style="color:var(--blue)">Liam Review</span><span class="pipe-count">2</span></div>
+            <div class="pipe-body">
+              <div class="pipe-card"><p class="pipe-title">Trading EAs on FXIFY</p><div class="pipe-meta"><span class="badge bd-teal">SEO</span><span class="pipe-writer">Imran N.</span></div></div>
+              <div class="pipe-card"><p class="pipe-title">Affiliate Program Guide</p><div class="pipe-meta"><span class="badge bd-teal">SEO</span><span class="pipe-writer">Harry H.</span></div></div>
+            </div>
+          </div>
+          <div class="pipeline-col">
+            <div class="pipe-head"><span class="pipe-label" style="color:var(--amber)">David Approval</span><span class="pipe-count">1</span></div>
+            <div class="pipe-body">
+              <div class="pipe-card"><p class="pipe-title">Prop Firm vs Retail Broker</p><div class="pipe-meta"><span class="badge bd-purple">Final</span><span class="pipe-writer">Roshan G.</span></div></div>
+            </div>
+          </div>
+          <div class="pipeline-col">
+            <div class="pipe-head"><span class="pipe-label" style="color:var(--tealB)">Publishing</span><span class="pipe-count">1</span></div>
+            <div class="pipe-body">
+              <div class="pipe-card"><p class="pipe-title">Forex vs Futures Prop Trading</p><div class="pipe-meta"><span class="badge bd-green">Ready</span><span class="pipe-writer">Sheperd M.</span></div></div>
+            </div>
+          </div>
+          <div class="pipeline-col">
+            <div class="pipe-head"><span class="pipe-label" style="color:var(--green)">Live</span><span class="pipe-count">5</span></div>
+            <div class="pipe-body">
+              <div class="pipe-card"><p class="pipe-title">How to Join FXIFY</p><div class="pipe-meta"><span class="badge bd-green">Live</span></div></div>
+              <div class="pipe-card"><p class="pipe-title">One Phase vs Two Phase</p><div class="pipe-meta"><span class="badge bd-green">Live</span></div></div>
+              <div class="pipe-card"><p class="pipe-title">Crypto vs Forex 2026</p><div class="pipe-meta"><span class="badge bd-green">Live</span></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GENERATE -->
+      <div id="a-generate" class="page-wrap">
+        <div class="pg-head">Generate Draft</div>
+        <p class="pg-sub">Fill in the brief below to create a new article brief</p>
+        <div style="display:flex;gap:0;margin-bottom:16px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;width:fit-content;">
+          <button class="brief-tab active" data-tab="core" style="padding:7px 16px;font-size:12px;font-weight:500;border:none;background:var(--navy);color:var(--tealB);cursor:pointer;font-family:inherit;">Core</button>
+          <button class="brief-tab" data-tab="seo" style="padding:7px 16px;font-size:12px;font-weight:500;border:none;border-left:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;font-family:inherit;">SEO</button>
+          <button class="brief-tab" data-tab="geo" style="padding:7px 16px;font-size:12px;font-weight:500;border:none;border-left:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;font-family:inherit;">GEO</button>
+          <button class="brief-tab" data-tab="aeo" style="padding:7px 16px;font-size:12px;font-weight:500;border:none;border-left:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;font-family:inherit;">AEO</button>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:12px;">
+          <div class="brief-panel" id="tab-core">
+            <div class="form-group"><label class="form-label">Article title</label><input class="form-input" type="text" placeholder="e.g. How to Manage Drawdown on a Funded Account"/></div>
+            <div class="form-row form-group">
+              <div><label class="form-label">Category</label><select class="form-input"><option>Guides</option><option>Trading Strategy</option><option>Market Analysis</option><option>Platform &amp; Programs</option><option>Trading Psychology</option><option>Crypto</option></select></div>
+              <div><label class="form-label">Length</label><select class="form-input"><option>~500 words</option><option selected>~900 words</option><option>~1,400 words</option><option>~2,000 words</option></select></div>
+            </div>
+            <div class="form-group"><label class="form-label">Tone</label><div class="tone-options"><div class="tone-opt active">Educational</div><div class="tone-opt">Analytical</div><div class="tone-opt">Motivational</div><div class="tone-opt">News</div></div></div>
+            <div class="form-group"><label class="form-label">Assign to writer</label><select class="form-input"><option>— Unassigned —</option><option>Fariha Khan</option><option>Harry Hosking</option><option>Imran Najib</option><option>Mamnun Ahmed</option><option>Roshan Ganesh</option><option>Shatha Altrad</option><option>Sheperd Morena</option></select></div>
+          </div>
+          <div class="brief-panel" id="tab-seo" style="display:none;">
+            <div style="background:var(--blueL);border-radius:var(--radius);padding:10px 12px;margin-bottom:16px;font-size:12px;color:var(--blue);">Optimise for search engines — keywords, meta, and internal linking.</div>
+            <div class="form-row form-group">
+              <div><label class="form-label">Primary keyword</label><input class="form-input" type="text" placeholder="e.g. funded account drawdown"/></div>
+              <div><label class="form-label">Secondary keyword</label><input class="form-input" type="text" placeholder="e.g. prop firm drawdown rules"/></div>
+            </div>
+            <div class="form-row form-group">
+              <div><label class="form-label">Meta title</label><input class="form-input" type="text" placeholder="~60 chars — include primary keyword"/></div>
+              <div><label class="form-label">Meta description</label><input class="form-input" type="text" placeholder="~155 chars — summarise the article"/></div>
+            </div>
+            <div class="form-group"><label class="form-label">Internal links to include</label><input class="form-input" type="text" placeholder="e.g. /blog/what-is-drawdown, /programs/one-phase"/></div>
+            <div class="form-row form-group">
+              <div><label class="form-label">Search intent</label><select class="form-input"><option>Informational</option><option>Commercial</option><option>Navigational</option><option>Transactional</option></select></div>
+              <div><label class="form-label">Target position</label><input class="form-input" type="text" placeholder="e.g. Top 3"/></div>
+            </div>
+          </div>
+          <div class="brief-panel" id="tab-geo" style="display:none;">
+            <div style="background:var(--tealL);border-radius:var(--radius);padding:10px 12px;margin-bottom:16px;font-size:12px;color:var(--teal);">Optimise for answer engines — Perplexity, Google AI Overviews, ChatGPT, Bing Copilot.</div>
+            <div class="form-group"><label class="form-label">Answer target</label><input class="form-input" type="text" placeholder="What question should this answer in AI results?"/></div>
+            <div class="form-group"><label class="form-label">Key claim to establish</label><input class="form-input" type="text" placeholder="e.g. FXIFY has one of the most flexible drawdown policies"/></div>
+            <div class="form-group"><label class="form-label">Authoritative sources to cite</label><input class="form-input" type="text" placeholder="e.g. FXIFY rules page, FCA guidance"/></div>
+            <div class="form-row form-group">
+              <div><label class="form-label">Answer engine priority</label><select class="form-input"><option>All engines</option><option>Google AI Overviews</option><option>ChatGPT</option><option>Perplexity</option><option>Bing Copilot</option></select></div>
+              <div><label class="form-label">Content format</label><select class="form-input"><option>Definition + explanation</option><option>Step-by-step guide</option><option>Comparison</option><option>FAQ</option></select></div>
+            </div>
+          </div>
+          <div class="brief-panel" id="tab-aeo" style="display:none;">
+            <div style="background:var(--purpleL);border-radius:var(--radius);padding:10px 12px;margin-bottom:16px;font-size:12px;color:var(--purple);">Optimise for featured snippets, People Also Ask, and voice search.</div>
+            <div class="form-group"><label class="form-label">Primary question target</label><input class="form-input" type="text" placeholder="e.g. How do I pass a prop firm evaluation?"/></div>
+            <div class="form-group"><label class="form-label">People Also Ask targets</label><input class="form-input" type="text" placeholder="e.g. What happens if I fail? Can I retry?"/></div>
+            <div class="form-row form-group">
+              <div><label class="form-label">Featured snippet type</label><select class="form-input"><option>Paragraph</option><option>Numbered list</option><option>Bulleted list</option><option>Table</option><option>None</option></select></div>
+              <div><label class="form-label">Schema markup</label><select class="form-input"><option>FAQ</option><option>HowTo</option><option>Article</option><option>None</option></select></div>
+            </div>
+            <div class="form-group"><label class="form-label">Voice search phrase</label><input class="form-input" type="text" placeholder="How someone would ask this out loud"/></div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;padding-top:4px;">
+            <button class="btn btn-primary btn-full" style="max-width:240px;" id="generate-btn">Create Draft</button>
+            <button class="btn" id="preview-editor-btn">Preview editor →</button>
+          </div>
+        </div>
+        <div id="gen-banner" style="display:none;">
+          <div class="result-banner">
+            <div class="result-text"><p>Draft created</p><p>897 words · Assigned to Fariha K.</p></div>
+            <button class="btn btn-primary" id="open-editor-btn">Open in editor →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- REVIEW QUEUE -->
+      <div id="a-review" class="page-wrap">
+        <div class="pg-head">Review Queue</div>
+        <p class="pg-sub">Submitted by writers — your first review before Liam</p>
+        <div class="art-card pr-urgent review-card" data-reviewer="sheperd">
+          <div class="card-body"><div class="card-top-row"><p class="card-title">How Drawdown Works on a Funded Account</p><div class="card-badges"><span class="badge bd-urgent">Urgent</span></div></div></div>
+          <div class="card-meta-row"><span class="meta-kw">funded account drawdown</span><span class="meta-time">934 words</span><span class="meta-due due-u">Submitted 2hrs ago · Harry H.</span></div>
+          <div class="card-footer"><span class="card-footer-info">Guides</span><div style="display:flex;gap:6px;"><button class="btn btn-sm btn-danger review-back">Send back</button><button class="btn btn-sm btn-primary review-approve">Approve → Liam</button></div></div>
+        </div>
+        <div class="art-card review-card" data-reviewer="sheperd">
+          <div class="card-body"><div class="card-top-row"><p class="card-title">Best Trading Sessions for Funded Traders</p><div class="card-badges"><span class="badge bd-normal">Normal</span></div></div></div>
+          <div class="card-meta-row"><span class="meta-kw">best forex trading sessions</span><span class="meta-time">876 words</span><span class="meta-due due-s">Submitted yesterday · Fariha K.</span></div>
+          <div class="card-footer"><span class="card-footer-info">Trading Strategy</span><div style="display:flex;gap:6px;"><button class="btn btn-sm btn-danger review-back">Send back</button><button class="btn btn-sm btn-primary review-approve">Approve → Liam</button></div></div>
+        </div>
+        <div class="art-card review-card" data-reviewer="sheperd">
+          <div class="card-body"><div class="card-top-row"><p class="card-title">Scalping Strategy for Funded Accounts</p><div class="card-badges"><span class="badge bd-high">High</span></div></div></div>
+          <div class="card-meta-row"><span class="meta-kw">scalping prop firm</span><span class="meta-time">912 words</span><span class="meta-due due-o">Submitted 2 days ago · Mamnun A.</span></div>
+          <div class="card-footer"><span class="card-footer-info">Trading Strategy</span><div style="display:flex;gap:6px;"><button class="btn btn-sm btn-danger review-back">Send back</button><button class="btn btn-sm btn-primary review-approve">Approve → Liam</button></div></div>
+        </div>
+      </div>
+
+      <!-- TOPIC CLUSTERS -->
+      <div id="a-clusters" class="page-wrap">
+        <div class="pg-head">Topic Clusters</div>
+        <p class="pg-sub">Enter a seed keyword to map out your topic cluster</p>
+        <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+          <input class="form-input" id="cluster-input" type="text" placeholder="e.g. prop firm evaluation" style="flex:1;min-width:200px;"/>
+          <button class="btn btn-blue" id="cluster-btn">Build cluster</button>
+        </div>
+        <div class="sec-head">Active clusters</div>
+        <div class="cluster-card">
+          <div class="cluster-header"><div><p class="cluster-name">Prop Firm Evaluation</p><p class="cluster-meta">1 pillar · 7 supporting · 4 published</p></div><span class="badge bd-green">Active</span></div>
+          <div class="cluster-body"><div class="cluster-table">
+            <div class="cluster-row"><span class="ct-title" style="font-weight:500;">How to Pass a Prop Firm Evaluation (Pillar)</span><span class="ct-kw">prop firm evaluation tips</span><span class="ct-intent">Commercial</span><span class="badge bd-green">Published</span></div>
+            <div class="cluster-row"><span class="ct-title">FXIFY Evaluation Rules Explained</span><span class="ct-kw">fxify evaluation rules</span><span class="ct-intent">Informational</span><span class="badge bd-green">Published</span></div>
+            <div class="cluster-row"><span class="ct-title">Why Traders Fail Prop Challenges</span><span class="ct-kw">why traders fail</span><span class="ct-intent">Informational</span><span class="badge bd-teal">In progress</span></div>
+            <div class="cluster-row"><span class="ct-title">One Phase vs Two Phase</span><span class="ct-kw">one phase vs two phase</span><span class="ct-intent">Commercial</span><span class="badge bd-normal">Briefed</span></div>
+            <div class="cluster-row"><span class="ct-title">How Long Does an Evaluation Take?</span><span class="ct-kw">how long prop firm evaluation</span><span class="ct-intent">Informational</span><span class="badge bd-low">Not started</span></div>
+          </div></div>
+        </div>
+        <div class="cluster-card">
+          <div class="cluster-header"><div><p class="cluster-name">Risk Management</p><p class="cluster-meta">1 pillar · 6 supporting · 2 published</p></div><span class="badge bd-teal">In progress</span></div>
+        </div>
+      </div>
+
+      <!-- ANALYTICS -->
+      <div id="a-analytics" class="page-wrap">
+        <div class="pg-head">Analytics</div>
+        <p class="pg-sub">Traffic, rankings and revenue attributed to content</p>
+        <div class="an-grid">
+          <div class="an-card"><p class="an-label">Published this month</p><p class="an-val">18</p><p class="an-change ch-up">↑ 6 vs last month</p></div>
+          <div class="an-card"><p class="an-label">Organic sessions</p><p class="an-val">24.8K</p><p class="an-change ch-up">↑ 34%</p></div>
+          <div class="an-card"><p class="an-label">Attributed sign-ups</p><p class="an-val">142</p><p class="an-change ch-up">↑ 18%</p></div>
+          <div class="an-card"><p class="an-label">Avg. edit time</p><p class="an-val">74m</p><p class="an-change ch-up">↓ 12m</p></div>
+          <div class="an-card"><p class="an-label">Attributed revenue</p><p class="an-val">£14.2K</p><p class="an-change ch-up">↑ 28%</p></div>
+          <div class="an-card"><p class="an-label">On-time rate</p><p class="an-val">91%</p><p class="an-change ch-dn">↓ 3%</p></div>
+        </div>
+        <div class="sec-head">Top articles</div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Article</th><th>Sessions</th><th>Position</th><th>Sign-ups</th><th>Revenue</th></tr></thead>
+            <tbody>
+              <tr><td>How to Pass Your FXIFY Evaluation First Time</td><td>4,820</td><td>3.2</td><td>38</td><td>£3,800</td></tr>
+              <tr><td>5 Risk Management Rules for Funded Traders</td><td>3,210</td><td>5.8</td><td>24</td><td>£2,400</td></tr>
+              <tr><td>EUR/USD Weekly Outlook</td><td>2,900</td><td>4.1</td><td>18</td><td>£1,800</td></tr>
+              <tr><td>What Is a Prop Trading Firm?</td><td>2,640</td><td>7.4</td><td>14</td><td>£1,400</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- WRITERS -->
+      <div id="a-writers" class="page-wrap">
+        <div class="pg-head">Writers</div>
+        <p class="pg-sub">Team workload and performance</p>
+        <div class="writer-grid">
+          <div class="writer-card"><div class="writer-top"><div class="w-avatar" style="background:linear-gradient(135deg,var(--teal),var(--tealB))">FK</div><div><p class="w-name">Fariha Khan</p><p class="w-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="6a0c0b1803020b2a0c12030c1344090507">[email&#160;protected]</a></p></div></div><div class="goal-item"><span class="goal-lbl" style="width:80px">This week</span><div class="goal-track"><div class="goal-bar" style="width:75%;background:var(--tealB)"></div></div><span class="goal-val" style="color:var(--tealB)">3/4</span></div><div class="goal-item"><span class="goal-lbl" style="width:80px">On time</span><div class="goal-track"><div class="goal-bar" style="width:90%;background:var(--green)"></div></div><span class="goal-val" style="color:var(--green)">90%</span></div><div class="goal-item"><span class="goal-lbl" style="width:80px">Avg. time</span><div class="goal-track"><div class="goal-bar" style="width:80%;background:var(--blue)"></div></div><span class="goal-val" style="color:var(--blue)">72m</span></div></div>
+          <div class="writer-card"><div class="writer-top"><div class="w-avatar" style="background:linear-gradient(135deg,var(--purple),#9333ea)">HH</div><div><p class="w-name">Harry Hosking</p><p class="w-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="aec6cfdcdcd7eec8d6c7c8d780cdc1c3">[email&#160;protected]</a></p></div></div><div class="goal-item"><span class="goal-lbl" style="width:80px">This week</span><div class="goal-track"><div class="goal-bar" style="width:50%;background:var(--tealB)"></div></div><span class="goal-val" style="color:var(--tealB)">2/4</span></div><div class="goal-item"><span class="goal-lbl" style="width:80px">On time</span><div class="goal-track"><div class="goal-bar" style="width:80%;background:var(--green)"></div></div><span class="goal-val" style="color:var(--green)">80%</span></div><div class="goal-item"><span class="goal-lbl" style="width:80px">Avg. time</span><div class="goal-track"><div class="goal-bar" style="width:85%;background:var(--blue)"></div></div><span class="goal-val" style="color:var(--blue)">82m</span></div></div>
+          <div class="writer-card"><div class="writer-top"><div class="w-avatar" style="background:linear-gradient(135deg,var(--amber),#f59e0b)">IN</div><div><p class="w-name">Imran Najib</p><p class="w-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="177e7a65767957716f7e716e3974787a">[email&#160;protected]</a></p></div></div><div class="goal-item"><span class="goal-lbl" style="width:80px">This week</span><div class="goal-track"><div class="goal-bar" style="width:100%;background:var(--tealB)"></div></div><span class="goal-val" style="color:var(--tealB)">4/4</span></div><div class="goal-item"><span class="goal-lbl" style="width:80px">On time</span><div class="goal-track"><div class="goal-bar" style="width:100%;background:var(--green)"></div></div><span class="goal-val" style="color:var(--green)">100%</span></div><div class="goal-item"><span class="goal-lbl" style="width:80px">Avg. time</span><div class="goal-track"><div class="goal-bar" style="width:65%;background:var(--blue)"></div></div><span class="goal-val" style="color:var(--blue)">64m</span></div></div>
+          <div class="writer-card"><div class="writer-top"><div class="w-avatar" style="background:linear-gradient(135deg,#0891b2,#06b6d4)">MA</div><div><p class="w-name">Mamnun Ahmed</p><p class="w-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="2f424e42415a416f4957464956014c4042">[email&#160;protected]</a></p></div></div><div class="goal-item"><span class="goal-lbl" style="width:80px">This week</span><div class="goal-track"><div class="goal-bar" style="width:50%;background:var(--tealB)"></div></div><span class="goal-val" style="color:var(--tealB)">2/4</span></div><div class="goal-item"><span class="goal-lbl" style="width:80px">On time</span><div class="goal-track"><div class="goal-bar" style="width:85%;background:var(--green)"></div></div><span class="goal-val" style="color:var(--green)">85%</span></div><div class="goal-item"><span class="goal-lbl" style="width:80px">Avg. time</span><div class="goal-track"><div class="goal-bar" style="width:75%;background:var(--blue)"></div></div><span class="goal-val" style="color:var(--blue)">78m</span></div></div>
+          <div class="writer-card"><div class="writer-top"><div class="w-avatar" style="background:linear-gradient(135deg,#dc2626,#ef4444)">RG</div><div><p class="w-name">Roshan Ganesh</p><p class="w-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="beccd1cdd6dfd0fed8c6d7d8c790ddd1d3">[email&#160;protected]</a></p></div></div><div class="goal-item"><span class="goal-lbl" style="width:80px">This week</span><div class="goal-track"><div class="goal-bar" style="width:75%;background:var(--tealB)"></div></div><span class="goal-val" style="color:var(--tealB)">3/4</span></div><div class="goal-item"><span class="goal-lbl" style="width:80px">On time</span><div class="goal-track"><div class="goal-bar" style="width:100%;background:var(--green)"></div></div><span class="goal-val" style="color:var(--green)">100%</span></div><div class="goal-item"><span class="goal-lbl" style="width:80px">Avg. time</span><div class="goal-track"><div class="goal-bar" style="width:70%;background:var(--blue)"></div></div><span class="goal-val" style="color:var(--blue)">68m</span></div></div>
+          <div class="writer-card"><div class="writer-top"><div class="w-avatar" style="background:linear-gradient(135deg,#7c3aed,#a855f7)">SA</div><div><p class="w-name">Shatha Altrad</p><p class="w-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="512239302539301137293837287f323e3c">[email&#160;protected]</a></p></div></div><div class="goal-item"><span class="goal-lbl" style="width:80px">This week</span><div class="goal-track"><div class="goal-bar" style="width:100%;background:var(--tealB)"></div></div><span class="goal-val" style="color:var(--tealB)">4/4</span></div><div class="goal-item"><span class="goal-lbl" style="width:80px">On time</span><div class="goal-track"><div class="goal-bar" style="width:78%;background:var(--green)"></div></div><span class="goal-val" style="color:var(--green)">78%</span></div><div class="goal-item"><span class="goal-lbl" style="width:80px">Avg. time</span><div class="goal-track"><div class="goal-bar" style="width:88%;background:var(--blue)"></div></div><span class="goal-val" style="color:var(--blue)">86m</span></div></div>
+          <div class="writer-card"><div class="writer-top"><div class="w-avatar" style="background:linear-gradient(135deg,var(--blue),#2563eb)">SM</div><div><p class="w-name">Sheperd Morena</p><p class="w-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="47342f223722352307213f2e213e6924282a">[email&#160;protected]</a></p></div></div><div class="goal-item"><span class="goal-lbl" style="width:80px">This week</span><div class="goal-track"><div class="goal-bar" style="width:75%;background:var(--tealB)"></div></div><span class="goal-val" style="color:var(--tealB)">3/4</span></div><div class="goal-item"><span class="goal-lbl" style="width:80px">On time</span><div class="goal-track"><div class="goal-bar" style="width:95%;background:var(--green)"></div></div><span class="goal-val" style="color:var(--green)">95%</span></div><div class="goal-item"><span class="goal-lbl" style="width:80px">Avg. time</span><div class="goal-track"><div class="goal-bar" style="width:72%;background:var(--blue)"></div></div><span class="goal-val" style="color:var(--blue)">70m</span></div></div>
+        </div>
+      </div>
+
+      <!-- PROMPTS (Admin only) -->
+      <div id="a-prompts" class="page-wrap">
+        <div class="pg-head">Prompt Library</div>
+        <p class="pg-sub">The master template used when generating every article draft</p>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <span style="font-size:13px;font-weight:500;color:var(--text)">FXIFY Blog Draft Prompt</span>
+          <span class="badge bd-teal">Active</span>
+        </div>
+        <div class="prompt-box"><pre><span class="pt-comment">FXIFY Blog Draft Prompt Template</span>
+
+<span class="pt-var">Topic:</span> <span class="pt-text">[Insert topic here]</span>
+
+<span class="pt-comment">━━ 1. CORE INSTRUCTIONS (Non-negotiable) ━━━━━━━━━━━━━━━━</span>
+<span class="pt-comment">Follow FXIFY tone of voice: direct, proof-led, no hype</span>
+<span class="pt-comment">Use short sentences. One idea per sentence.</span>
+<span class="pt-comment">No metaphors. No vague claims. No filler or generic advice.</span>
+<span class="pt-comment">Every sentence must be functional and specific.</span>
+
+<span class="pt-comment">━━ 2. SEO REQUIREMENTS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="pt-var">Primary keyword:</span>    <span class="pt-text">[Insert primary keyword]</span>
+<span class="pt-var">Secondary keywords:</span> <span class="pt-text">[kw1] · [kw2] · [kw3] · [kw4] · [kw5]</span>
+
+<span class="pt-comment">Rules:</span>
+<span class="pt-comment">· Primary keyword in H1, first 100 words, at least one H2</span>
+<span class="pt-comment">· Secondary keywords in H2s and body naturally</span>
+<span class="pt-comment">· No keyword stuffing</span>
+
+<span class="pt-comment">━━ 3. STRUCTURE (Mandatory) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="pt-var">H1:</span> <span class="pt-text">Clear, keyword-led title</span>
+
+<span class="pt-var">Intro</span> <span class="pt-text">(max 120 words)</span>
+<span class="pt-comment">· Define what the article covers</span>
+<span class="pt-comment">· No storytelling. Direct explanation.</span>
+<span class="pt-text">[VISUAL: Description of overview image or chart]</span>
+
+<span class="pt-var">Quick Summary Table</span> <span class="pt-text">(MANDATORY)</span>
+<span class="pt-comment">Columns: [Column 1] · [Column 2] · [Column 3] · [Column 4]</span>
+
+<span class="pt-var">Table of Contents</span>
+
+<span class="pt-var">Section: [Section Name]</span>
+<span class="pt-comment">· [Instruction for what this section covers]</span>
+<span class="pt-text">[VISUAL: Description of supporting image or diagram]</span>
+
+<span class="pt-var">Section: Main Body (repeat per topic item)</span>
+<span class="pt-comment">For EACH item use this structure:</span>
+<span class="pt-comment">· H2 (keyword variation)</span>
+<span class="pt-comment">· Short explanation</span>
+<span class="pt-comment">· What it signals</span>
+<span class="pt-comment">· Where it forms / applies</span>
+<span class="pt-comment">· How traders use it</span>
+<span class="pt-text">[VISUAL: Item-specific image]</span>
+
+<span class="pt-var">Section: Common Mistakes</span>
+<span class="pt-comment">· Specific mistakes only. No generic advice.</span>
+
+<span class="pt-var">Section: How This Applies to Prop Trading</span>
+<span class="pt-comment">· Connect to risk control and execution discipline</span>
+<span class="pt-comment">· Use ONLY approved FXIFY terms:</span>
+<span class="pt-comment">  starting capital · performance split · evaluation programs</span>
+<span class="pt-comment">· Do not invent features</span>
+<span class="pt-text">[VISUAL: Applied example image]</span>
+
+<span class="pt-var">Section: Key Takeaways</span> <span class="pt-text">(MANDATORY)</span>
+<span class="pt-comment">· Bullet points only. Non-repetitive. Clear insights.</span>
+
+<span class="pt-var">FAQ Section</span> <span class="pt-text">(MANDATORY — 5 to 7 questions)</span>
+<span class="pt-comment">· Search-driven questions. No vague wording. Direct answers.</span>
+
+<span class="pt-comment">━━ 4. INTERNAL LINKING (MANDATORY) ━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="pt-comment">Insert contextual placeholders throughout:</span>
+<span class="pt-text">[INTERNAL LINK: prop firm challenge rules]</span>
+<span class="pt-text">[INTERNAL LINK: drawdown explained]</span>
+<span class="pt-text">[INTERNAL LINK: risk management strategies]</span>
+
+<span class="pt-comment">━━ 5. FORMATTING RULES ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="pt-comment">· Max 2 lines per paragraph</span>
+<span class="pt-comment">· Bold: key terms · key signals · critical rules</span>
+<span class="pt-comment">· Make content highly scannable</span>
+
+<span class="pt-comment">━━ 6. FXIFY BRAND INTEGRATION (Strict) ━━━━━━━━━━━━━━━━━</span>
+<span class="pt-comment">· 1 to 2 natural mentions only</span>
+<span class="pt-comment">· Tie to: evaluation programs, trading structure, risk discipline</span>
+<span class="pt-comment">· No promotional tone. Proof-led, trader-first positioning.</span>
+
+<span class="pt-comment">━━ 7. META DETAILS (Deliver alongside draft) ━━━━━━━━━━━━</span>
+<span class="pt-comment">· Meta title (60 chars max)</span>
+<span class="pt-comment">· Meta description (160 chars max)</span>
+<span class="pt-comment">· URL slug</span>
+<span class="pt-comment">· Primary keyword · Secondary keywords · Focus keyphrase</span>
+<span class="pt-comment">· OG title · OG description</span>
+<span class="pt-comment">· Schema type and suggested fields</span>
+<span class="pt-comment">· Estimated read time · Featured image alt text</span>
+
+<span class="pt-comment">━━ 8. FINAL QUALITY CHECKLIST ━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="pt-comment">☐ Structure complete    ☐ Summary table included</span>
+<span class="pt-comment">☐ Visual placeholders   ☐ Internal links included</span>
+<span class="pt-comment">☐ FAQ included          ☐ No long paragraphs</span>
+<span class="pt-comment">☐ No vague language     ☐ Keywords correctly placed</span>
+<span class="pt-comment">☐ Tone direct/factual   ☐ Meta details included</span>
+
+<span class="pt-comment">Output: Clean blog draft + proper headings + meta section at end</span>
+<span class="pt-comment">If any instruction is unclear → stop and ask before writing.</span></pre></div>
+      </div>
+
+    </div><!-- /main-area admin -->
+  </div>
+</div>
+
+<!-- ═══════════════════════ WRITER ═══════════════════════ -->
+<div id="writer" class="screen">
+  <div class="topbar">
+    <div class="tb-left">
+      <button class="menu-toggle" id="writer-menu-btn" aria-label="Menu"><span></span><span></span><span></span></button>
+      <a class="tb-logo" id="writer-logo"><div class="tb-bars"><span></span><span></span><span></span></div><div class="tb-name-mark">FXIFY</div></a>
+      <div class="tb-sep"></div><span class="tb-ctx">Writer Portal</span>
+    </div>
+    <div class="tb-right">
+      <div class="tb-notif">🔔<div class="tb-dot"></div></div>
+      <span class="tb-user">Fariha K.</span>
+      <div class="tb-avatar">FK</div>
+    </div>
+  </div>
+  <div class="app-wrap">
+    <div class="sidebar-overlay" id="writer-overlay"></div>
+    <nav class="sidebar" id="writer-sidebar">
+      <div class="nav-section">
+        <div class="nav-grp-label">My work</div>
+        <div class="nav-link active" data-page="w-drafts" data-screen="writer"><span class="nav-ico">✦</span>My Drafts<span class="nav-badge">3</span></div>
+        <div class="nav-link" data-page="w-submitted" data-screen="writer"><span class="nav-ico">◎</span>Submitted</div>
+        <div class="nav-link" data-page="w-published" data-screen="writer"><span class="nav-ico">▲</span>Published</div>
+      </div>
+      <div class="nav-divider"></div>
+      <div class="nav-section">
+        <div class="nav-grp-label">Resources</div>
+        <div class="nav-link" data-page="w-goals" data-screen="writer"><span class="nav-ico">◈</span>My Goals</div>
+        <div class="nav-link" data-page="w-learn" data-screen="writer"><span class="nav-ico">📚</span>Learn</div>
+        <div class="nav-link" data-page="w-style" data-screen="writer"><span class="nav-ico">≡</span>Style Guide</div>
+      </div>
+    </nav>
+    <div class="main-area">
+
+      <!-- MY DRAFTS -->
+      <div id="w-drafts" class="page-wrap active">
+        <p style="font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:3px;" id="greet-time">Good morning</p>
+        <h1 class="greeting">Hey Fariha, here's what's<br>on your plate. 👋</h1>
+        <p class="greeting-sub">You've got 1 urgent task that needs your attention first. Let's get it done.</p>
+        <div class="stats-row">
+          <div class="stat-card sc-urgent"><p class="stat-label">Urgent</p><p class="stat-val" style="color:var(--urgent)">1</p><p class="stat-hint">now</p></div>
+          <div class="stat-card sc-blue"><p class="stat-label">Assigned</p><p class="stat-val">3</p><p class="stat-hint">this week</p></div>
+          <div class="stat-card sc-teal"><p class="stat-label">Est. remaining</p><p class="stat-val">3.5<span style="font-size:14px;font-weight:400">h</span></p><p class="stat-hint">total</p></div>
+          <div class="stat-card sc-green"><p class="stat-label">Published</p><p class="stat-val">12</p><p class="stat-hint">all time</p></div>
+        </div>
+        <div class="goals-box">
+          <div class="goals-header"><span class="goals-title">Weekly goal</span><span class="goals-sub">3 of 4 articles</span></div>
+          <div class="goal-item"><span class="goal-lbl">Articles done</span><div class="goal-track"><div class="goal-bar" style="width:75%;background:var(--tealB)"></div></div><span class="goal-val" style="color:var(--tealB)">3/4</span></div>
+          <div class="goal-item"><span class="goal-lbl">Avg. time</span><div class="goal-track"><div class="goal-bar" style="width:82%;background:var(--green)"></div></div><span class="goal-val" style="color:var(--green)">74m</span></div>
+          <div class="goal-item"><span class="goal-lbl">On-time rate</span><div class="goal-track"><div class="goal-bar" style="width:90%;background:var(--blue)"></div></div><span class="goal-val" style="color:var(--blue)">90%</span></div>
+        </div>
+        <div class="sec-head">Urgent</div>
+        <div class="art-card pr-urgent draft-card">
+          <div class="card-body">
+            <div class="card-top-row"><p class="card-title">How to Pass Your Fxify Evaluation First Time</p><div class="card-badges"><span class="badge bd-urgent">Urgent</span></div></div>
+            <div class="intent-block"><p class="intent-tag">Intent</p><p class="intent-text">Target traders researching how to pass evaluations. High commercial intent — close to purchasing. Rank for "fxify evaluation tips" and convert to sign-ups.</p></div>
+          </div>
+          <div class="card-meta-row"><span class="meta-kw">fxify evaluation tips</span><span class="meta-time">Est. 75 min</span><span class="meta-due due-u">Due in 18 hours</span></div>
+          <div class="card-footer"><span class="card-footer-info">~900 words · Guides</span><button class="btn btn-primary btn-sm draft-open-btn">Open draft →</button></div>
+        </div>
+        <div class="sec-head" style="margin-top:16px">High priority</div>
+        <div class="art-card pr-high draft-card">
+          <div class="card-body">
+            <div class="card-top-row"><p class="card-title">5 Risk Management Rules Every Funded Trader Needs</p><div class="card-badges"><span class="badge bd-high">High</span></div></div>
+            <div class="intent-block"><p class="intent-tag">Intent</p><p class="intent-text">Funded traders who've just passed evaluation needing to protect their account. Builds trust, reduces churn.</p></div>
+          </div>
+          <div class="card-meta-row"><span class="meta-kw">funded trader risk management</span><span class="meta-time">Est. 90 min</span><span class="meta-due due-s">Due in 2 days</span></div>
+          <div class="card-footer"><span class="card-footer-info">~900 words · Trading Strategy</span><button class="btn btn-sm draft-open-btn">Open draft →</button></div>
+        </div>
+        <div class="sec-head" style="margin-top:16px">Normal</div>
+        <div class="art-card draft-card">
+          <div class="card-body">
+            <div class="card-top-row"><p class="card-title">EUR/USD Weekly Outlook: Key Levels to Watch</p><div class="card-badges"><span class="badge bd-normal">Normal</span></div></div>
+            <div class="intent-block"><p class="intent-tag">Intent</p><p class="intent-text">Weekly analysis to drive repeat traffic. Traders search for this every Monday. Builds Fxify authority.</p></div>
+          </div>
+          <div class="card-meta-row"><span class="meta-kw">eurusd analysis 2026</span><span class="meta-time">Est. 60 min</span><span class="meta-due due-o">Due in 3 days</span></div>
+          <div class="card-footer"><span class="card-footer-info">~600 words · Market Analysis</span><button class="btn btn-sm draft-open-btn">Open draft →</button></div>
+        </div>
+      </div>
+
+      <!-- SUBMITTED -->
+      <div id="w-submitted" class="page-wrap">
+        <div class="pg-head">Submitted</div>
+        <p class="pg-sub">With Sheperd now — sit tight.</p>
+        <div class="art-card"><div class="card-body"><div class="card-top-row"><p class="card-title">The Psychology of Losing Trades</p><span class="badge bd-purple">In review</span></div></div><div class="card-meta-row"><span class="meta-kw">trading psychology</span><span class="meta-time">Submitted 2 days ago</span></div></div>
+      </div>
+
+      <!-- PUBLISHED -->
+      <div id="w-published" class="page-wrap">
+        <div class="pg-head">Published</div>
+        <p class="pg-sub">Your articles live on the Fxify blog.</p>
+        <div class="art-card"><div class="card-body"><div class="card-top-row"><p class="card-title">How to Build a Daily Trading Routine</p><span class="badge bd-green">Live</span></div></div><div class="card-meta-row"><span class="meta-kw">trading routine</span><span class="meta-due due-o">Published Mar 14 · 4,820 views</span></div></div>
+        <div class="art-card"><div class="card-body"><div class="card-top-row"><p class="card-title">What Is a Prop Trading Firm?</p><span class="badge bd-green">Live</span></div></div><div class="card-meta-row"><span class="meta-kw">prop trading firm</span><span class="meta-due due-o">Published Mar 9 · 3,210 views</span></div></div>
+      </div>
+
+      <!-- GOALS -->
+      <div id="w-goals" class="page-wrap">
+        <div class="pg-head">My Goals</div>
+        <p class="pg-sub">April 2026 — week 1 of 4</p>
+        <div class="goals-box">
+          <div class="goal-item"><span class="goal-lbl">Articles edited</span><div class="goal-track"><div class="goal-bar" style="width:75%;background:var(--tealB)"></div></div><span class="goal-val" style="color:var(--tealB)">9/12</span></div>
+          <div class="goal-item"><span class="goal-lbl">On time</span><div class="goal-track"><div class="goal-bar" style="width:89%;background:var(--green)"></div></div><span class="goal-val" style="color:var(--green)">8/9</span></div>
+          <div class="goal-item"><span class="goal-lbl">Avg. edit time</span><div class="goal-track"><div class="goal-bar" style="width:80%;background:var(--blue)"></div></div><span class="goal-val" style="color:var(--blue)">74m</span></div>
+          <div class="goal-item"><span class="goal-lbl">Sent back</span><div class="goal-track"><div class="goal-bar" style="width:11%;background:var(--urgent)"></div></div><span class="goal-val" style="color:var(--urgent)">1/9</span></div>
+        </div>
+        <div class="sec-head">Streak</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;" id="streak-dots"></div>
+      </div>
+
+      <!-- LEARN -->
+      <div id="w-learn" class="page-wrap">
+        <div class="pg-head">Learn</div>
+        <p class="pg-sub">Guides, tips and best practices to write great FXIFY content</p>
+
+        <div class="sec-head">SEO</div>
+        <div class="cluster-card">
+          <div class="cluster-header"><div><p class="cluster-name">SEO Guide</p><p class="cluster-meta">Keywords · meta · internal links · readability</p></div><span class="badge bd-normal">Essential</span></div>
+          <div class="cluster-body"><div style="padding:16px;display:flex;flex-direction:column;gap:14px;">
+            <div><p style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px;">Use your keyword naturally — don't force it</p><p style="font-size:13px;color:var(--muted);line-height:1.6;">Primary keyword should appear in the title, first paragraph, at least one H2, and naturally throughout the body. The editor tracks this in the right panel. Target 8–12 occurrences for a 900-word article.</p></div>
+            <div><p style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px;">Keep sentences under 25 words</p><p style="font-size:13px;color:var(--muted);line-height:1.6;">Long sentences hurt readability scores and reader attention. The editor flags sentences over the limit with an amber underline. Break them up.</p></div>
+            <div><p style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px;">Add 2–4 internal links per article</p><p style="font-size:13px;color:var(--muted);line-height:1.6;">Link to related FXIFY blog posts and programme pages. The right panel suggests which articles to link based on the topic. Use descriptive anchor text — not "click here".</p></div>
+            <div><p style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px;">Target SEO score above 85</p><p style="font-size:13px;color:var(--muted);line-height:1.6;">The editor scores your article live. Below 80 Liam will likely send it back. Check the left sidebar before submitting.</p></div>
+          </div></div>
+        </div>
+
+        <div class="sec-head" style="margin-top:16px">GEO</div>
+        <div class="cluster-card">
+          <div class="cluster-header"><div><p class="cluster-name">GEO Guide</p><p class="cluster-meta">Writing for ChatGPT · Perplexity · Google AI Overviews</p></div><span class="badge bd-teal">Important</span></div>
+          <div class="cluster-body"><div style="padding:16px;display:flex;flex-direction:column;gap:14px;">
+            <div><p style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px;">Answer the question in the first paragraph</p><p style="font-size:13px;color:var(--muted);line-height:1.6;">Search and answer engines look for the direct answer first. Don't bury it. If the article is about "how to pass an evaluation", the second or third sentence should give the core answer. Build the detail after.</p></div>
+            <div><p style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px;">Define key terms clearly</p><p style="font-size:13px;color:var(--muted);line-height:1.6;">Search and answer engines surface definitions prominently. When you use a specific term like "trailing drawdown" or "funded account", define it clearly in one sentence. This dramatically improves GEO score.</p></div>
+            <div><p style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px;">Write confident, factual claims — no hedging</p><p style="font-size:13px;color:var(--muted);line-height:1.6;">Avoid "some traders may find..." or "it could be argued...". Favour direct, citable statements. Write like FXIFY knows what it's talking about — because it does.</p></div>
+            <div><p style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px;">Target GEO score above 80</p><p style="font-size:13px;color:var(--muted);line-height:1.6;">GEO score below 75 will be flagged by Liam in his SEO review. The most common failure points are missing definitions and no direct answer in the intro.</p></div>
+          </div></div>
+        </div>
+
+        <div class="sec-head" style="margin-top:16px">AEO</div>
+        <div class="cluster-card">
+          <div class="cluster-header"><div><p class="cluster-name">AEO Guide</p><p class="cluster-meta">Featured snippets · People Also Ask · Voice search</p></div><span class="badge bd-purple">Advanced</span></div>
+          <div class="cluster-body"><div style="padding:16px;display:flex;flex-direction:column;gap:14px;">
+            <div><p style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px;">Write a direct answer in 40–60 words</p><p style="font-size:13px;color:var(--muted);line-height:1.6;">Featured snippets are usually 40–60 words. Write one clean, self-contained answer to the main question near the top of the article. This is what Google will pull for the snippet and what voice assistants will read aloud.</p></div>
+            <div><p style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px;">Cover PAA questions with H3 subheadings</p><p style="font-size:13px;color:var(--muted);line-height:1.6;">People Also Ask questions are shown in the brief. Each one should become an H3 heading in the article with a 2–3 sentence answer directly below it. The FAQ section at the end of the article is the right place for these.</p></div>
+            <div><p style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px;">Target AEO score above 75</p><p style="font-size:13px;color:var(--muted);line-height:1.6;">Schema markup is added automatically on publish. Your job is to cover the PAA questions and write the direct answer block. These two things alone move the AEO score significantly.</p></div>
+          </div></div>
+        </div>
+
+        <div class="sec-head" style="margin-top:16px">Quick tips</div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;gap:10px;align-items:flex-start;"><span style="color:var(--tealB);font-size:14px;flex-shrink:0;">→</span><p style="font-size:13px;color:var(--text2);line-height:1.5;">Never start with "In this article we will..." — open with the hook or the answer</p></div>
+          <div style="display:flex;gap:10px;align-items:flex-start;"><span style="color:var(--tealB);font-size:14px;flex-shrink:0;">→</span><p style="font-size:13px;color:var(--text2);line-height:1.5;">Use "you" throughout — always speak directly to the trader</p></div>
+          <div style="display:flex;gap:10px;align-items:flex-start;"><span style="color:var(--tealB);font-size:14px;flex-shrink:0;">→</span><p style="font-size:13px;color:var(--text2);line-height:1.5;">Every H2 section should leave the reader knowing something actionable</p></div>
+          <div style="display:flex;gap:10px;align-items:flex-start;"><span style="color:var(--tealB);font-size:14px;flex-shrink:0;">→</span><p style="font-size:13px;color:var(--text2);line-height:1.5;">End with a CTA — always point back to FXIFY programmes or a related article</p></div>
+          <div style="display:flex;gap:10px;align-items:flex-start;"><span style="color:var(--tealB);font-size:14px;flex-shrink:0;">→</span><p style="font-size:13px;color:var(--text2);line-height:1.5;">Check all three scores in the editor sidebar before hitting Submit</p></div>
+        </div>
+      </div>
+
+      <!-- STYLE GUIDE -->
+      <div id="w-style" class="page-wrap">
+        <div class="pg-head">Style Guide</div>
+        <p class="pg-sub">How every Fxify article should sound.</p>
+        <div style="display:grid;grid-template-columns:1fr;gap:12px;">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;">
+            <p style="font-size:11px;font-weight:600;color:var(--teal);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;">We sound like</p>
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div><p style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:2px;">Confident</p><p style="font-size:13px;color:var(--muted);line-height:1.6;">We know trading. No hedging or over-qualifying.</p></div>
+              <div><p style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:2px;">Direct</p><p style="font-size:13px;color:var(--muted);line-height:1.6;">Short sentences. Get to the point fast.</p></div>
+              <div><p style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:2px;">Second person</p><p style="font-size:13px;color:var(--muted);line-height:1.6;">Always "you" — talk to the trader directly.</p></div>
+              <div><p style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:2px;">Practical</p><p style="font-size:13px;color:var(--muted);line-height:1.6;">Every article makes the reader better or smarter.</p></div>
+            </div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;">
+            <p style="font-size:11px;font-weight:600;color:var(--urgent);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;">Never sound like</p>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <p style="font-size:13px;color:var(--muted);padding-left:12px;border-left:2px solid var(--border);line-height:1.6;">Academic or overly formal</p>
+              <p style="font-size:13px;color:var(--muted);padding-left:12px;border-left:2px solid var(--border);line-height:1.6;">Vague — "some traders may find..."</p>
+              <p style="font-size:13px;color:var(--muted);padding-left:12px;border-left:2px solid var(--border);line-height:1.6;">Preachy — inform, don't lecture</p>
+              <p style="font-size:13px;color:var(--muted);padding-left:12px;border-left:2px solid var(--border);line-height:1.6;">"In this article we will..."</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /main-area writer -->
+  </div>
+</div>
+
+<!-- ═══════════════════════ LIAM — SEO REVIEWER ═══════════════════════ -->
+<div id="liam" class="screen">
+  <div class="topbar">
+    <div class="tb-left">
+      <button class="menu-toggle" id="liam-menu-btn" aria-label="Menu"><span></span><span></span><span></span></button>
+      <a class="tb-logo" id="liam-logo"><div class="tb-bars"><span></span><span></span><span></span></div><div class="tb-name-mark">FXIFY</div></a>
+      <div class="tb-sep"></div><span class="tb-ctx">SEO Review</span>
+    </div>
+    <div class="tb-right">
+      <div class="tb-notif">🔔<div class="tb-dot"></div></div>
+      <span class="tb-user">Liam</span>
+      <div class="tb-avatar" style="background:linear-gradient(135deg,var(--blue),#2563eb)">L</div>
+    </div>
+  </div>
+  <div class="app-wrap">
+    <div class="sidebar-overlay" id="liam-overlay"></div>
+    <nav class="sidebar" id="liam-sidebar">
+      <div class="nav-section">
+        <div class="nav-grp-label">My Queue</div>
+        <div class="nav-link active" data-page="l-review" data-screen="liam"><span class="nav-ico">🔍</span>SEO Review<span class="nav-badge">2</span></div>
+        <div class="nav-link" data-page="l-approved" data-screen="liam"><span class="nav-ico">▲</span>Approved</div>
+      </div>
+      <div class="nav-divider"></div>
+      <div class="nav-section">
+        <div class="nav-grp-label">Tools</div>
+        <div class="nav-link" data-page="l-clusters" data-screen="liam"><span class="nav-ico">✦</span>Topic Clusters</div>
+        <div class="nav-link" data-page="l-analytics" data-screen="liam"><span class="nav-ico">▲</span>Analytics</div>
+      </div>
+    </nav>
+    <div class="main-area">
+      <div id="l-review" class="page-wrap active">
+        <div class="pg-head">SEO Review Queue</div>
+        <p class="pg-sub">Cleared by Sheperd — check SEO, GEO and AEO before sending to David</p>
+        <div class="art-card pr-high review-card" data-reviewer="liam">
+          <div class="card-body"><div class="card-top-row"><p class="card-title">Trading EAs on FXIFY</p><div class="card-badges"><span class="badge bd-high">High</span></div></div></div>
+          <div class="card-meta-row"><span class="meta-kw">trading EAs prop firm</span><span class="meta-time">921 words</span><span class="meta-due due-s">Cleared by Sheperd · Imran N.</span></div>
+          <div style="display:flex;gap:10px;padding:10px 14px;background:var(--bg2);flex-wrap:wrap;align-items:center;">
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;"><span style="font-weight:700;color:var(--blue)">SEO 87</span><div style="width:40px;height:4px;background:var(--border);border-radius:2px;overflow:hidden;"><div style="width:87%;height:100%;background:var(--blue);border-radius:2px;"></div></div></div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;"><span style="font-weight:700;color:var(--tealB)">GEO 72</span><div style="width:40px;height:4px;background:var(--border);border-radius:2px;overflow:hidden;"><div style="width:72%;height:100%;background:var(--tealB);border-radius:2px;"></div></div></div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;"><span style="font-weight:700;color:var(--purple)">AEO 65</span><div style="width:40px;height:4px;background:var(--border);border-radius:2px;overflow:hidden;"><div style="width:65%;height:100%;background:var(--purple);border-radius:2px;"></div></div></div>
+            <span style="font-size:11px;color:var(--urgent);margin-left:auto;">⚠ GEO + AEO below threshold</span>
+          </div>
+          <div class="card-footer"><span class="card-footer-info">Guides</span><div style="display:flex;gap:6px;"><button class="btn btn-sm btn-danger liam-back">Send back to writer</button><button class="btn btn-sm btn-primary liam-fwd">Approve → David</button></div></div>
+        </div>
+        <div class="art-card review-card" data-reviewer="liam">
+          <div class="card-body"><div class="card-top-row"><p class="card-title">Affiliate Program Guide</p><div class="card-badges"><span class="badge bd-normal">Normal</span></div></div></div>
+          <div class="card-meta-row"><span class="meta-kw">fxify affiliate program</span><span class="meta-time">876 words</span><span class="meta-due due-o">Cleared by Sheperd · Harry H.</span></div>
+          <div style="display:flex;gap:10px;padding:10px 14px;background:var(--bg2);flex-wrap:wrap;align-items:center;">
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;"><span style="font-weight:700;color:var(--blue)">SEO 91</span><div style="width:40px;height:4px;background:var(--border);border-radius:2px;overflow:hidden;"><div style="width:91%;height:100%;background:var(--blue);border-radius:2px;"></div></div></div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;"><span style="font-weight:700;color:var(--tealB)">GEO 84</span><div style="width:40px;height:4px;background:var(--border);border-radius:2px;overflow:hidden;"><div style="width:84%;height:100%;background:var(--tealB);border-radius:2px;"></div></div></div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;"><span style="font-weight:700;color:var(--purple)">AEO 79</span><div style="width:40px;height:4px;background:var(--border);border-radius:2px;overflow:hidden;"><div style="width:79%;height:100%;background:var(--purple);border-radius:2px;"></div></div></div>
+            <span style="font-size:11px;color:var(--green);margin-left:auto;">✓ All scores clear</span>
+          </div>
+          <div class="card-footer"><span class="card-footer-info">Guides</span><div style="display:flex;gap:6px;"><button class="btn btn-sm btn-danger liam-back">Send back to writer</button><button class="btn btn-sm btn-primary liam-fwd">Approve → David</button></div></div>
+        </div>
+      </div>
+      <div id="l-approved" class="page-wrap">
+        <div class="pg-head">Approved</div>
+        <p class="pg-sub">Sent to David for final sign-off.</p>
+        <div class="art-card"><div class="card-body"><div class="card-top-row"><p class="card-title">Prop Firm vs Retail Broker</p><span class="badge bd-purple">With David</span></div></div><div class="card-meta-row"><span class="meta-kw">prop firm vs broker</span><span class="meta-time">Approved 1 day ago</span></div></div>
+      </div>
+      <div id="l-clusters" class="page-wrap">
+        <div class="pg-head">Topic Clusters</div>
+        <p class="pg-sub">SEO cluster overview — coverage and gaps.</p>
+        <div class="cluster-card"><div class="cluster-header"><div><p class="cluster-name">Prop Firm Evaluation</p><p class="cluster-meta">1 pillar · 7 supporting · 4 published</p></div><span class="badge bd-green">Active</span></div></div>
+        <div class="cluster-card"><div class="cluster-header"><div><p class="cluster-name">Risk Management</p><p class="cluster-meta">1 pillar · 6 supporting · 2 published</p></div><span class="badge bd-teal">In progress</span></div></div>
+      </div>
+      <div id="l-analytics" class="page-wrap">
+        <div class="pg-head">SEO Analytics</div>
+        <p class="pg-sub">Performance of articles you've approved.</p>
+        <div class="an-grid">
+          <div class="an-card"><p class="an-label">Avg SEO score</p><p class="an-val">88</p><p class="an-change ch-up">↑ 4 pts</p></div>
+          <div class="an-card"><p class="an-label">Avg GEO score</p><p class="an-val">79</p><p class="an-change ch-up">↑ 6 pts</p></div>
+          <div class="an-card"><p class="an-label">Avg AEO score</p><p class="an-val">71</p><p class="an-change ch-dn">↓ 2 pts</p></div>
+          <div class="an-card"><p class="an-label">Featured snippets</p><p class="an-val">4</p><p class="an-change ch-up">↑ 1</p></div>
+          <div class="an-card"><p class="an-label">AI citations</p><p class="an-val">7</p><p class="an-change ch-up">New</p></div>
+          <div class="an-card"><p class="an-label">PAA positions</p><p class="an-val">12</p><p class="an-change ch-up">↑ 3</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ DAVID — MANAGER ═══════════════════════ -->
+<div id="david" class="screen">
+  <div class="topbar">
+    <div class="tb-left">
+      <button class="menu-toggle" id="david-menu-btn" aria-label="Menu"><span></span><span></span><span></span></button>
+      <a class="tb-logo" id="david-logo"><div class="tb-bars"><span></span><span></span><span></span></div><div class="tb-name-mark">FXIFY</div></a>
+      <div class="tb-sep"></div><span class="tb-ctx">Manager</span>
+    </div>
+    <div class="tb-right">
+      <div class="tb-notif">🔔</div>
+      <span class="tb-user">David Xavier</span>
+      <div class="tb-avatar" style="background:linear-gradient(135deg,var(--amber),#f59e0b)">DX</div>
+    </div>
+  </div>
+  <div class="app-wrap">
+    <div class="sidebar-overlay" id="david-overlay"></div>
+    <nav class="sidebar" id="david-sidebar">
+      <div class="nav-section">
+        <div class="nav-grp-label">Approvals</div>
+        <div class="nav-link active" data-page="d-approval" data-screen="david"><span class="nav-ico">✅</span>Final Approval<span class="nav-badge">1</span></div>
+        <div class="nav-link" data-page="d-log" data-screen="david"><span class="nav-ico">▲</span>Approved Log</div>
+      </div>
+    </nav>
+    <div class="main-area">
+      <div id="d-approval" class="page-wrap active">
+        <div class="pg-head">Final Approval</div>
+        <p class="pg-sub">Cleared by Liam's SEO review — your sign-off sends it to publishing</p>
+        <div class="art-card pr-purple review-card" data-reviewer="david">
+          <div class="card-body">
+            <div class="card-top-row"><p class="card-title">Prop Firm vs Retail Broker</p><div class="card-badges"><span class="badge bd-purple">Awaiting you</span></div></div>
+            <div class="intent-block"><p class="intent-tag">Intent</p><p class="intent-text">Informational — traders comparing options before purchasing. Targets "prop firm vs broker" searches. High commercial intent.</p></div>
+          </div>
+          <div class="card-meta-row"><span class="meta-kw">prop firm vs retail broker</span><span class="meta-time">934 words</span><span class="meta-due due-s">Liam approved · Roshan G.</span></div>
+          <div style="display:flex;gap:10px;padding:10px 14px;background:var(--bg2);flex-wrap:wrap;align-items:center;">
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;"><span style="font-weight:700;color:var(--blue)">SEO 91</span><div style="width:40px;height:4px;background:var(--border);border-radius:2px;overflow:hidden;"><div style="width:91%;height:100%;background:var(--blue);border-radius:2px;"></div></div></div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;"><span style="font-weight:700;color:var(--tealB)">GEO 84</span><div style="width:40px;height:4px;background:var(--border);border-radius:2px;overflow:hidden;"><div style="width:84%;height:100%;background:var(--tealB);border-radius:2px;"></div></div></div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;"><span style="font-weight:700;color:var(--purple)">AEO 79</span><div style="width:40px;height:4px;background:var(--border);border-radius:2px;overflow:hidden;"><div style="width:79%;height:100%;background:var(--purple);border-radius:2px;"></div></div></div>
+            <span style="font-size:11px;color:var(--green);margin-left:auto;">✓ All scores clear</span>
+          </div>
+          <div class="card-footer"><span class="card-footer-info">Guides · 934 words</span><div style="display:flex;gap:6px;"><button class="btn btn-sm btn-danger david-back">Request changes</button><button class="btn btn-sm btn-primary david-fwd">Final approval ✓</button></div></div>
+        </div>
+      </div>
+      <div id="d-log" class="page-wrap">
+        <div class="pg-head">Approved Log</div>
+        <p class="pg-sub">Articles you've approved — with Sheperd for publishing.</p>
+        <div class="art-card"><div class="card-body"><div class="card-top-row"><p class="card-title">Forex vs Futures Prop Trading</p><span class="badge bd-green">Published</span></div></div><div class="card-meta-row"><span class="meta-kw">forex vs futures prop trading</span><span class="meta-due due-o">Approved Mar 23 · Live on blog</span></div></div>
+        <div class="art-card"><div class="card-body"><div class="card-top-row"><p class="card-title">Crypto vs Forex 2026</p><span class="badge bd-green">Published</span></div></div><div class="card-meta-row"><span class="meta-kw">crypto vs forex 2026</span><span class="meta-due due-o">Approved Mar 18 · Live on blog</span></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ EDITOR ═══════════════════════ -->
+<div id="editor" class="screen">
+  <div class="ed-topbar">
+    <div class="ed-bc">
+      <span style="cursor:pointer;color:#475569;flex-shrink:0;" id="editor-back">← Back</span>
+      <span style="color:#1e3a5f;flex-shrink:0;">/</span>
+      <span class="active">How to Pass Your Fxify Evaluation First Time</span>
+    </div>
+    <div class="ed-actions">
+      <span class="autosave-txt">● Saved</span>
+      <button class="btn btn-ghost btn-sm" id="editor-save">Save</button>
+      <button class="btn btn-primary btn-sm" id="editor-submit">Submit →</button>
+    </div>
+  </div>
+  <!-- REVIEWER TOOLBAR — shown when admin/liam/david open a draft -->
+  <div class="reviewer-bar" id="reviewer-bar" style="display:none;">
+    <span class="reviewer-label" id="reviewer-label">Reviewing as Sheperd</span>
+    <input class="reviewer-note" id="reviewer-note" type="text" placeholder="Leave a note for the writer (optional)..."/>
+    <div class="reviewer-actions" id="reviewer-actions"></div>
+  </div>
+
+  <!-- COMMENT MODAL -->
+  <div class="modal-overlay" id="comment-modal">
+    <div class="modal-box">
+      <p class="modal-title" id="modal-title">Send back to writer</p>
+      <p class="modal-sub" id="modal-sub">Leave a note explaining what needs to change. The writer will see this when they open the draft.</p>
+      <textarea class="modal-textarea" id="modal-comment" placeholder="e.g. The intro needs a direct answer in the first two sentences. GEO score is too low — define drawdown and funded account clearly..."></textarea>
+      <div class="modal-actions">
+        <button class="btn" id="modal-cancel">Cancel</button>
+        <button class="btn btn-danger" id="modal-confirm">Send back with note</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="ed-layout">
+
+    <!-- LEFT SIDEBAR -->
+    <div class="ed-sidebar">
+      <div class="es-block"><p class="es-label">Priority</p><span class="badge bd-urgent" style="margin-top:3px;">Urgent</span></div>
+      <div class="es-block"><p class="es-label">Keyword</p><span class="es-chip es-kw">fxify evaluation tips</span></div>
+      <div class="es-block"><p class="es-label">Due</p><span class="es-chip es-due">Tomorrow 5pm</span></div>
+      <div class="es-block"><p class="es-label">Word count</p><div class="wc-track"><div class="wc-fill" style="width:94%"></div></div><p class="wc-txt">847 / 900 words</p></div>
+      <div class="es-div"></div>
+      <div class="es-block" style="width:100%">
+        <p class="es-label" style="margin-bottom:8px;">SEO Score</p>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--blue);">87</div><div style="flex:1;"><div style="background:#1e3a5f;border-radius:4px;height:5px;overflow:hidden;"><div style="width:87%;height:100%;background:var(--blue);border-radius:4px;"></div></div><p style="font-size:10px;color:#475569;margin-top:3px;">Good</p></div></div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#64748b;"><span style="color:var(--green)">✓</span>Keyword in title</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#64748b;"><span style="color:var(--green)">✓</span>Keyword in intro</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#64748b;"><span style="color:var(--green)">✓</span>H2 subheadings used</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#64748b;"><span style="color:var(--amber)">!</span>Meta description missing</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#64748b;"><span style="color:var(--urgent)">✗</span>No internal links yet</div>
+        </div>
+      </div>
+      <div class="es-div"></div>
+      <div class="es-block" style="width:100%">
+        <p class="es-label" style="margin-bottom:8px;">GEO Score</p>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--tealB);">72</div><div style="flex:1;"><div style="background:#1e3a5f;border-radius:4px;height:5px;overflow:hidden;"><div style="width:72%;height:100%;background:var(--tealB);border-radius:4px;"></div></div><p style="font-size:10px;color:#475569;margin-top:3px;">Needs work</p></div></div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#64748b;"><span style="color:var(--green)">✓</span>Direct answer in intro</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#64748b;"><span style="color:var(--green)">✓</span>Confident factual tone</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#64748b;"><span style="color:var(--urgent)">✗</span>No key terms defined</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#64748b;"><span style="color:var(--urgent)">✗</span>No sources cited</div>
+        </div>
+      </div>
+      <div class="es-div"></div>
+      <div class="es-block" style="width:100%">
+        <p class="es-label" style="margin-bottom:8px;">AEO Score</p>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--purple);">65</div><div style="flex:1;"><div style="background:#1e3a5f;border-radius:4px;height:5px;overflow:hidden;"><div style="width:65%;height:100%;background:var(--purple);border-radius:4px;"></div></div><p style="font-size:10px;color:#475569;margin-top:3px;">Needs work</p></div></div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#64748b;"><span style="color:var(--amber)">!</span>Direct answer too long</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#64748b;"><span style="color:var(--urgent)">✗</span>No PAA questions covered</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#64748b;"><span style="color:var(--urgent)">✗</span>Schema markup missing</div>
+        </div>
+      </div>
+      <div class="es-div"></div>
+      <div class="es-block" style="width:100%">
+        <p class="es-label" style="margin-bottom:8px;">Before submitting</p>
+        <div class="check-list">
+          <div class="check-item"><div class="check-box checked">✓</div><span>Hook is strong</span></div>
+          <div class="check-item"><div class="check-box checked">✓</div><span>Keyword used naturally</span></div>
+          <div class="check-item"><div class="check-box"></div><span>Key terms defined</span></div>
+          <div class="check-item"><div class="check-box"></div><span>PAA questions covered</span></div>
+          <div class="check-item"><div class="check-box"></div><span>Facts verified</span></div>
+          <div class="check-item"><div class="check-box"></div><span>CTA is clear</span></div>
+          <div class="check-item"><div class="check-box"></div><span>GEO score above 80</span></div>
+          <div class="check-item"><div class="check-box"></div><span>AEO score above 75</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTRE CANVAS -->
+    <div class="ed-canvas">
+      <div class="art-featured-img"><span>Featured image</span></div>
+      <div class="art-meta-bar">
+        <span class="art-meta-tag">Guides</span>
+        <span class="art-meta-info">By Fariha Khan</span>
+        <span class="art-meta-info">·</span>
+        <span class="art-meta-info">April 6, 2026</span>
+        <span class="art-meta-info">·</span>
+        <span class="art-meta-info">~9 min read</span>
+      </div>
+      <div class="art-body">
+        <h1>How to Pass Your <span class="kw-primary">Fxify Evaluation</span> First Time</h1>
+        <p class="art-deck">Most traders don't fail their <span class="kw-primary">Fxify evaluation</span> because of bad strategy. They fail because they ignore the rules. Here's how to make sure that isn't you.</p>
+        <div class="art-key-takeaways"><p>Key takeaways</p><ul>
+          <li>Know your daily drawdown limit before you place a single trade</li>
+          <li>Size positions at 0.5–1% risk per trade during the evaluation</li>
+          <li>Wait for A-grade setups — you don't need to trade every day</li>
+          <li>The <span class="kw-primary">evaluation</span> rewards consistency, not big wins</li>
+        </ul></div>
+        <p>The <span class="kw-primary">evaluation</span> isn't hard because the markets are unpredictable. It's hard because most traders ignore the one thing that matters — <strong>risk management</strong>. You can have a solid strategy and still blow your <span class="kw-primary">Fxify evaluation</span> in two bad trades. The traders who pass aren't necessarily the best traders. They're the most disciplined ones.</p>
+        <p>This guide covers exactly what you need to do — and what you need to stop doing — to pass your <span class="kw-primary">Fxify evaluation</span> on the first attempt.</p>
+        <h2>Know Your Numbers Before You Trade</h2>
+        <p>Before you open your trading platform, write down three numbers: your <strong>daily drawdown limit</strong>, your <strong>maximum drawdown</strong>, and your <strong>profit target</strong>. Know them cold. These aren't guidelines — they're the rules of the game, and breaking any one of them ends your <span class="kw-primary">evaluation</span> immediately.</p>
+        <p>For the <span class="kw-primary">Fxify</span> standard two-phase programme, you're working with a 5% daily drawdown and 10% maximum drawdown. That means on a $100,000 account, you can lose no more than $5,000 in a single day. <span class="kw-long">Most traders who breach this limit do so because they kept adding to a losing position rather than cutting it when the signals were clear.</span></p>
+        <div class="art-img-placeholder">Insert chart or image here</div>
+        <h2>Size Your Positions to Survive Bad Days</h2>
+        <p>Position sizing is where most <span class="kw-primary">evaluation</span> attempts die. The pressure of the profit target makes traders over-leverage. They take 3–5% risk on a single trade trying to hit the target faster. One bad setup wipes out two days of gains and suddenly you're chasing losses.</p>
+        <p>During your <span class="kw-primary">Fxify evaluation</span>, keep risk per trade between <strong>0.5% and 1%</strong> of your account. On a $100K account that's $500–$1,000 per trade. It feels conservative. It's meant to. The <span class="kw-secondary">prop firm evaluation</span> is not the place to swing for the fences.</p>
+        <div class="art-pull-quote">"If you're at 60% of your daily drawdown limit, the answer is never to add to the position. Cut your size in half and protect what you have left."</div>
+        <p>If you hit 50% of your daily drawdown limit before noon, stop trading for the day. This single rule alone will save more evaluations than any strategy improvement.</p>
+        <h2>Trade Your Best Setups — Nothing Else</h2>
+        <p>The <span class="kw-primary">evaluation</span> window creates psychological pressure. You feel like you need to be in the market every day to hit the profit target in time. You don't. A two-week <span class="kw-primary">Fxify evaluation</span> with ten trading days only needs you to average 1% gain per day on a 10% target. That's achievable with three or four clean trades per week.</p>
+        <p>Define your A-grade setup before the evaluation starts. Write it down. Only take trades that match that setup exactly. If you're staring at the charts looking for something to trade, that's a signal to close the platform and come back tomorrow.</p>
+        <h3>What counts as an A-grade setup?</h3>
+        <ul>
+          <li>Clear market structure — higher highs and higher lows for longs</li>
+          <li>Setup aligns with the higher timeframe trend</li>
+          <li>Entry at a key level — support, resistance, or previous high/low</li>
+          <li>Risk-to-reward of at least 1:2 before you enter</li>
+        </ul>
+        <h2>Track Your Progress Daily</h2>
+        <p>Successful <span class="kw-primary">evaluation</span> traders treat it like a job, not a game. At the end of each session, record your P&amp;L, how many trades you took, whether each trade matched your A-grade setup, and your current drawdown status. This takes five minutes. It keeps you honest and stops emotional drift from creeping in on day three or four.</p>
+        <p>Many traders who fail their second or third <span class="kw-primary">Fxify evaluation</span> do so because they made the same mistake as the first time. A simple trading log makes those patterns visible.</p>
+        <p>If you want to understand exactly how the drawdown rules work before you start, read our guide on <a class="art-internal-link">how drawdown works on a funded account</a>. Getting this wrong is the single most common reason evaluations fail.</p>
+        <h2>The Day Before Your Evaluation Starts</h2>
+        <p>Most traders focus entirely on the evaluation itself and ignore the preparation. The 24 hours before matter. Review the <span class="kw-primary">Fxify</span> rules one more time. Set your position size calculator. Mark the key levels on your charts for the week ahead. Know what economic events are scheduled — <a class="art-internal-link">check the forex trading sessions guide</a> for timing across markets.</p>
+        <p>Go in prepared, not hopeful.</p>
+        <div class="art-cta-box">
+          <p>Ready to start your funded trading journey? FXIFY offers one-phase and two-phase evaluations starting from $25,000 accounts.</p>
+          <button class="btn">Get Funded with FXIFY →</button>
+        </div>
+        <h2>Frequently Asked Questions</h2>
+        <h3>How long does the Fxify evaluation take?</h3>
+        <p>There is no fixed time limit on the <span class="kw-primary">Fxify evaluation</span>. You trade until you hit your profit target, provided you stay within the drawdown rules. Most traders complete it within 14–30 trading days.</p>
+        <h3>What happens if I fail the evaluation?</h3>
+        <p>You can purchase a reset or start a new evaluation. Some <span class="kw-primary">Fxify</span> programmes offer a free retry if you breach the rules on day one. Check your specific programme terms before you start.</p>
+        <h3>Can I trade news events during the evaluation?</h3>
+        <p>Yes, unless your programme specifically prohibits it. However, high-impact news events significantly increase volatility and drawdown risk. Most experienced <span class="kw-secondary">prop firm</span> traders avoid the 15 minutes either side of major releases during their <span class="kw-primary">evaluation</span>.</p>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL — SEO optimisation -->
+    <div class="ed-seo-panel">
+      <div class="seo-section">
+        <p class="seo-section-title">Keyword usage</p>
+        <div class="kw-occurrence"><span>fxify evaluation <span style="font-size:9px;background:rgba(14,196,173,.15);padding:1px 5px;border-radius:3px;color:var(--tealB)">PRIMARY</span></span><span class="kw-count">9×</span></div>
+        <div class="kw-occurrence"><span>prop firm evaluation <span style="font-size:9px;background:rgba(26,86,219,.12);padding:1px 5px;border-radius:3px;color:var(--blue)">SECONDARY</span></span><span class="kw-count">3×</span></div>
+        <p style="font-size:10px;color:var(--muted);margin-top:6px;">Target: primary 8–12×, secondary 2–5×. ✓ On track.</p>
+      </div>
+      <div class="seo-section">
+        <p class="seo-section-title">LSI Keywords</p>
+        <div style="display:flex;flex-wrap:wrap;gap:2px;">
+          <span class="lsi-chip present">drawdown limit ✓</span>
+          <span class="lsi-chip present">risk management ✓</span>
+          <span class="lsi-chip present">profit target ✓</span>
+          <span class="lsi-chip present">position sizing ✓</span>
+          <span class="lsi-chip missing">funded account ✗</span>
+          <span class="lsi-chip missing">trading rules ✗</span>
+          <span class="lsi-chip missing">max drawdown ✗</span>
+        </div>
+      </div>
+      <div class="seo-section">
+        <p class="seo-section-title">Readability</p>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px;"><span>Grade level</span><span style="color:var(--green);font-weight:500;">Grade 9 — Good</span></div>
+        <div class="readability-bar"><div class="readability-fill"></div></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:8px;margin-bottom:4px;"><span>Avg sentence length</span><span style="color:var(--amber);font-weight:500;">22 words</span></div>
+        <div class="readability-bar"><div class="readability-fill" style="width:58%;background:var(--amber);"></div></div>
+        <p style="font-size:10px;color:var(--muted);margin-top:6px;">2 sentences flagged — amber underline in text.</p>
+      </div>
+      <div class="seo-section">
+        <p class="seo-section-title">Internal links</p>
+        <div class="internal-suggest">↗ <span>How drawdown works on a funded account</span></div>
+        <div class="internal-suggest">↗ <span>Best forex trading sessions guide</span></div>
+        <div class="internal-suggest">↗ <span>One phase vs two phase evaluation</span></div>
+        <p style="font-size:10px;color:var(--muted);margin-top:6px;">2 links added ✓ — target is 2–4 per article.</p>
+      </div>
+      <div class="seo-section">
+        <p class="seo-section-title">PAA coverage</p>
+        <div class="paa-item covered">How long does the Fxify evaluation take? ✓</div>
+        <div class="paa-item covered">What happens if I fail the evaluation? ✓</div>
+        <div class="paa-item">Can I trade crypto on Fxify?</div>
+        <div class="paa-item">Is Fxify legit?</div>
+        <p style="font-size:10px;color:var(--muted);margin-top:6px;">2/4 covered — add remaining as H3s to improve AEO score.</p>
+      </div>
+      <div class="seo-section">
+        <p class="seo-section-title">Schema markup</p>
+        <div class="schema-box"><span class="sk">"@type"</span>: <span class="sv">"FAQPage"</span>,
+<span class="sk">"mainEntity"</span>: [{
+  <span class="sk">"@type"</span>: <span class="sv">"Question"</span>,
+  <span class="sk">"name"</span>: <span class="sv">"How long does the Fxify evaluation take?"</span>
+}]</div>
+        <p style="font-size:10px;color:var(--muted);margin-top:6px;">FAQ schema auto-generated — added on publish.</p>
+      </div>
+      <div class="seo-section">
+        <p class="seo-section-title">Meta fields</p>
+        <div style="margin-bottom:8px;">
+          <p style="font-size:10px;color:var(--muted);margin-bottom:4px;">Meta title <span style="color:var(--green)">58 chars ✓</span></p>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:7px 9px;font-size:11px;color:var(--text2);">How to Pass Your Fxify Evaluation First Time</div>
+        </div>
+        <div>
+          <p style="font-size:10px;color:var(--muted);margin-bottom:4px;">Meta description <span style="color:var(--urgent)">Missing ✗</span></p>
+          <textarea style="width:100%;padding:7px 9px;border:1px solid rgba(239,68,68,.4);border-radius:6px;font-size:11px;color:var(--text2);font-family:inherit;resize:vertical;min-height:56px;outline:none;" placeholder="Add a 120–155 char description..."></textarea>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+(function() {
+  var activeRole = 'admin';
+  var prevScreen = 'admin';
+
+  function showToast(msg) {
+    var t = document.getElementById('toast');
+    if (!t) return;
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(function(){ t.classList.remove('show'); }, 3000);
+  }
+
+  function closeSidebar(sid, oid) {
+    var s = document.getElementById(sid);
+    var o = document.getElementById(oid);
+    if (s) s.classList.remove('open');
+    if (o) o.classList.remove('show');
+  }
+
+  function goTo(id) {
+    if (id !== 'editor') prevScreen = id;
+    document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+    var t = document.getElementById(id);
+    if (t) t.classList.add('active');
+    window.scrollTo(0,0);
+    ['admin','writer','liam','david'].forEach(function(r){
+      closeSidebar(r+'-sidebar', r+'-overlay');
+    });
+  }
+
+  function switchPage(screenId, pageId, navEl) {
+    var screen = document.getElementById(screenId);
+    if (!screen) return;
+    var page = document.getElementById(pageId);
+    if (!page) return;
+    screen.querySelectorAll('.nav-link').forEach(function(n){ n.classList.remove('active'); });
+    if (navEl) navEl.classList.add('active');
+    screen.querySelectorAll('.page-wrap').forEach(function(p){ p.classList.remove('active'); });
+    page.classList.add('active');
+    closeSidebar(screenId+'-sidebar', screenId+'-overlay');
+    window.scrollTo(0,0);
+  }
+
+  function init() {
+    // Greeting
+    var h = new Date().getHours();
+    var gt = document.getElementById('greet-time');
+    if (gt) gt.textContent = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+
+    // Streak dots
+    var sd = document.getElementById('streak-dots');
+    if (sd) {
+      [1,1,0,1,1,1,0,1,1,1,1,0,1,1,1,1,1,0,1,1,0,1,1,1,0,1,1,0].forEach(function(v){
+        var d = document.createElement('div');
+        d.style.cssText = 'width:10px;height:10px;border-radius:3px;flex-shrink:0;background:'+(v?'var(--tealB)':'var(--border)');
+        sd.appendChild(d);
+      });
+    }
+
+    // Role buttons
+    document.querySelectorAll('.role-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        document.querySelectorAll('.role-btn').forEach(function(b){ b.classList.remove('active'); });
+        btn.classList.add('active');
+        var t = btn.textContent.trim().toLowerCase();
+        if (t.indexOf('admin') !== -1) activeRole = 'admin';
+        else if (t.indexOf('seo') !== -1) activeRole = 'liam';
+        else if (t.indexOf('manager') !== -1) activeRole = 'david';
+        else activeRole = 'writer';
+      });
+    });
+
+    // Login
+    var loginBtn = document.querySelector('.g-btn');
+    if (loginBtn) loginBtn.addEventListener('click', function(){ goTo(activeRole); });
+
+    // All logo links go to login
+    ['admin-logo','writer-logo','liam-logo','david-logo'].forEach(function(id){
+      var el = document.getElementById(id);
+      if (el) el.addEventListener('click', function(){ goTo('login'); });
+    });
+
+    // Menu toggles
+    ['admin','writer','liam','david'].forEach(function(r){
+      var btn = document.getElementById(r+'-menu-btn');
+      if (btn) btn.addEventListener('click', function(){
+        document.getElementById(r+'-sidebar').classList.toggle('open');
+        document.getElementById(r+'-overlay').classList.toggle('show');
+      });
+      var ov = document.getElementById(r+'-overlay');
+      if (ov) ov.addEventListener('click', function(){ closeSidebar(r+'-sidebar', r+'-overlay'); });
+    });
+
+    // Nav links — all use data-page and data-screen attributes
+    document.querySelectorAll('.nav-link[data-page]').forEach(function(link){
+      link.addEventListener('click', function(){
+        var page = link.getAttribute('data-page');
+        var screen = link.getAttribute('data-screen');
+        if (page && screen) switchPage(screen, page, link);
+      });
+    });
+
+    // Tone options
+    document.querySelectorAll('.tone-opt').forEach(function(opt){
+      opt.addEventListener('click', function(){
+        opt.closest('.tone-options').querySelectorAll('.tone-opt').forEach(function(t){ t.classList.remove('active'); });
+        opt.classList.add('active');
+      });
+    });
+
+    // Brief tabs
+    document.querySelectorAll('.brief-tab').forEach(function(tab){
+      tab.addEventListener('click', function(){
+        document.querySelectorAll('.brief-tab').forEach(function(t){
+          t.style.background = 'var(--surface)';
+          t.style.color = 'var(--muted)';
+        });
+        tab.style.background = 'var(--navy)';
+        tab.style.color = 'var(--tealB)';
+        var tabId = tab.getAttribute('data-tab');
+        document.querySelectorAll('.brief-panel').forEach(function(p){ p.style.display = 'none'; });
+        var panel = document.getElementById('tab-'+tabId);
+        if (panel) panel.style.display = 'block';
+      });
+    });
+
+    // Generate btn
+    var genBtn = document.getElementById('generate-btn');
+    if (genBtn) genBtn.addEventListener('click', function(){
+
+      var title = document.querySelector('#tab-core input[type="text"]') ?
+        document.querySelector('#tab-core input[type="text"]').value.trim() : '';
+      var categorySelects = document.querySelectorAll('#tab-core select');
+      var category = categorySelects[0] ? categorySelects[0].value : 'Guides';
+      var length = categorySelects[1] ? categorySelects[1].value : '~900 words';
+      var assignee = categorySelects[2] ? categorySelects[2].value : 'Unassigned';
+      var tone = document.querySelector('.tone-opt.active') ?
+        document.querySelector('.tone-opt.active').textContent.trim() : 'Educational';
+      var seoInputs = document.querySelectorAll('#tab-seo input');
+      var primaryKw = seoInputs[0] ? seoInputs[0].value.trim() : '';
+      var secondaryKws = seoInputs[1] ? seoInputs[1].value.trim() : '';
+      var searchIntent = document.querySelector('#tab-seo select') ?
+        document.querySelector('#tab-seo select').value : 'Informational';
+      var geoTarget = document.querySelector('#tab-geo input') ?
+        document.querySelector('#tab-geo input').value.trim() : '';
+      var aeoQuestion = document.querySelector('#tab-aeo input') ?
+        document.querySelector('#tab-aeo input').value.trim() : '';
+      var schema = document.querySelector('#tab-aeo select') ?
+        document.querySelector('#tab-aeo select').value : 'FAQ';
+
+      if (!title) { showToast('Add an article title first'); return; }
+
+      genBtn.textContent = 'Writing draft...';
+      genBtn.disabled = true;
+
+      var prompt = 'FXIFY Blog Draft Prompt\n\n' +
+        'Topic: ' + title + '\n\n' +
+        '1. CORE INSTRUCTIONS (Non-negotiable)\n' +
+        '- Follow FXIFY tone of voice: direct, proof-led, no hype\n' +
+        '- Use short sentences. One idea per sentence.\n' +
+        '- No metaphors. No vague claims. No filler or generic advice.\n' +
+        '- Every sentence must be functional and specific.\n' +
+        '- Tone: ' + tone + '\n\n' +
+        '2. SEO REQUIREMENTS\n' +
+        'Primary keyword: ' + (primaryKw || title.toLowerCase()) + '\n' +
+        'Secondary keywords: ' + (secondaryKws || 'prop trading, funded trader, trading account') + '\n' +
+        'Search intent: ' + searchIntent + '\n' +
+        '- Primary keyword in H1, first 100 words, at least one H2\n' +
+        '- No keyword stuffing\n\n' +
+        '3. STRUCTURE (Mandatory)\n' +
+        'H1: Clear keyword-led title\n' +
+        'Intro (max 120 words): Define what the article covers. No storytelling.\n' +
+        '[VISUAL: Overview image or chart]\n\n' +
+        'Quick Summary Table (MANDATORY) with 4 relevant columns\n\n' +
+        'Table of Contents\n\n' +
+        'Main body sections. For each key topic item:\n' +
+        '- H2 (keyword variation)\n- Short explanation\n- What it signals\n- Where it applies\n- How traders use it\n' +
+        '[VISUAL: Item-specific image]\n\n' +
+        'Section: Common Mistakes — specific only, no generic advice\n\n' +
+        'Section: How This Applies to Prop Trading\n' +
+        '- Connect to risk control and execution discipline\n' +
+        '- Use ONLY: starting capital, performance split, evaluation programs\n' +
+        '- Do not invent features\n' +
+        '[VISUAL: Applied example]\n\n' +
+        'Key Takeaways (MANDATORY) — bullets only\n\n' +
+        'FAQ Section (MANDATORY) — 5 to 7 search-driven questions\n' +
+        (aeoQuestion ? '- Include this question: ' + aeoQuestion + '\n' : '') +
+        (geoTarget ? '- GEO answer target: ' + geoTarget + '\n' : '') + '\n' +
+        '4. INTERNAL LINKING\n' +
+        'Insert [INTERNAL LINK: topic] placeholders contextually throughout.\n\n' +
+        '5. FORMATTING\n' +
+        '- Max 2 lines per paragraph. Bold key terms.\n' +
+        '- Highly scannable. Target: ' + length + '\n\n' +
+        '6. FXIFY BRAND\n' +
+        '- 1 to 2 natural mentions. Proof-led positioning.\n\n' +
+        '7. META DETAILS (after article)\n' +
+        'Meta title (60 chars), meta description (160 chars), URL slug, ' +
+        'keywords, focus keyphrase, OG title, OG description, ' +
+        'schema: ' + schema + ', read time, alt text\n\n' +
+        'Output clean blog draft + meta section. No explanations outside the article.';
+
+      fetch('/.netlify/functions/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: prompt, max_tokens: 4000 })
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        var text = (data.content && data.content[0]) ? data.content[0].text : '';
+        if (!text) throw new Error(data.error ? data.error.message : 'Empty response');
+
+        window._draft = { title: title, category: category, assignee: assignee, primaryKw: primaryKw || title, content: text };
+        renderDraftToEditor(window._draft);
+
+        // Create Google Doc and embed it
+        showToast('Creating Google Doc...');
+        fetch('/.netlify/functions/create-doc', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: title, content: text })
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(docData){
+          if (docData.embedUrl) {
+            embedGoogleDoc(docData.embedUrl, docData.docUrl);
+            window._draft.docUrl = docData.docUrl;
+            window._draft.embedUrl = docData.embedUrl;
+            showToast('Draft ready — Google Doc created ✓');
+          }
+        })
+        .catch(function(e){
+          console.warn('Doc creation failed:', e);
+          // silently fall back to HTML editor — already rendered
+        });
+
+        genBtn.textContent = 'Create Draft';
+        genBtn.disabled = false;
+        var banner = document.getElementById('gen-banner');
+        if (banner) {
+          banner.style.display = 'block';
+          var wc = text.split(/\s+/).filter(Boolean).length;
+          var p = banner.querySelector('.result-text p:last-child');
+          if (p) p.textContent = wc + ' words · Assigned to ' + (assignee === '— Unassigned —' ? 'Unassigned' : assignee);
+        }
+        showToast('Draft created — ready in editor');
+      })
+      .catch(function(e){
+        console.error(e);
+        genBtn.textContent = 'Create Draft';
+        genBtn.disabled = false;
+        showToast('Could not reach API — check connection');
+      });
+    });
+
+    function embedGoogleDoc(embedUrl, docUrl) {
+      var canvas = document.querySelector('.ed-canvas');
+      if (!canvas) return;
+
+      // Replace canvas content with iframe + doc link bar
+      canvas.innerHTML =
+        '<div style="background:var(--navy3);padding:8px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid rgba(14,196,173,.1);">' +
+          '<span style="font-size:11px;color:#475569;">Editing in Google Docs — changes save automatically</span>' +
+          '<a href="' + docUrl + '" target="_blank" style="font-size:11px;color:var(--tealB);font-weight:500;text-decoration:none;">Open in new tab ↗</a>' +
+        '</div>' +
+        '<iframe src="' + embedUrl + '" style="width:100%;height:calc(100vh - 160px);border:none;" allow="autoplay" sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-top-navigation"></iframe>';
+    }
+
+    function renderDraftToEditor(draft) {
+      var bc = document.querySelector('.ed-bc .active');
+      if (bc) bc.textContent = draft.title;
+      var ti = document.querySelector('.art-title-input');
+      if (ti) ti.value = draft.title;
+      var mt = document.querySelector('.art-meta-tag');
+      if (mt) mt.textContent = draft.category;
+      var kw = document.querySelector('.es-chip.es-kw');
+      if (kw) kw.textContent = draft.primaryKw;
+
+      var body = document.querySelector('.art-body');
+      if (body) body.innerHTML = parseDraft(draft.content, draft.primaryKw);
+
+      var intent = document.querySelector('.art-intent-box p:last-child');
+      if (intent) intent.textContent = 'AI first draft — edit and humanise before submitting.';
+    }
+
+    function parseDraft(text, kw) {
+      var lines = text.split('\n');
+      var html = '';
+      var inUl = false, inOl = false, inTable = false;
+      var kwRe = kw ? new RegExp('(' + kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi') : null;
+
+      function closeAll() {
+        if (inUl) { html += '</ul>'; inUl = false; }
+        if (inOl) { html += '</ol>'; inOl = false; }
+        if (inTable) { html += '</tbody></table></div>'; inTable = false; }
+      }
+
+      function process(s) {
+        s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        s = s.replace(/\[INTERNAL LINK: ([^\]]+)\]/g, '<a class="art-internal-link">$1</a>');
+        if (kwRe) s = s.replace(kwRe, '<span class="kw-primary">$1</span>');
+        return s;
+      }
+
+      // Stop at meta section
+      var metaIdx = text.search(/\n(Meta title|7\. META|━━ 7\.)/i);
+      var body = metaIdx > 0 ? text.substring(0, metaIdx) : text;
+      lines = body.split('\n');
+
+      lines.forEach(function(raw) {
+        var l = raw.trim();
+        if (!l) { closeAll(); return; }
+        if (l.startsWith('# ')) { closeAll(); html += '<h1>' + process(l.slice(2)) + '</h1>'; return; }
+        if (l.startsWith('## ')) { closeAll(); html += '<h2>' + process(l.slice(3)) + '</h2>'; return; }
+        if (l.startsWith('### ')) { closeAll(); html += '<h3>' + process(l.slice(4)) + '</h3>'; return; }
+        if (l.startsWith('[VISUAL:')) { closeAll(); html += '<div class="art-img-placeholder">' + l.replace('[VISUAL:','').replace(']','').trim() + '</div>'; return; }
+        if (l.startsWith('[INTERNAL LINK:')) return;
+        if (l.startsWith('|')) {
+          if (l.replace(/[\|:\- ]/g,'') === '') return;
+          if (!inTable) { html += '<div style="overflow-x:auto;margin:20px 0;"><table class="data-table"><tbody>'; inTable = true; }
+          var cells = l.split('|').filter(function(c){return c.trim();});
+          html += '<tr>' + cells.map(function(c){return '<td>'+c.trim()+'</td>';}).join('') + '</tr>';
+          return;
+        }
+        if (l.match(/^[-*•]\s/)) {
+          if (inOl){html+='</ol>';inOl=false;} if (inTable){html+='</tbody></table></div>';inTable=false;}
+          if (!inUl) { html += '<ul>'; inUl = true; }
+          html += '<li>' + process(l.replace(/^[-*•]\s/,'')) + '</li>';
+          return;
+        }
+        if (l.match(/^\d+\.\s/)) {
+          if (inUl){html+='</ul>';inUl=false;} if (inTable){html+='</tbody></table></div>';inTable=false;}
+          if (!inOl) { html += '<ol>'; inOl = true; }
+          html += '<li>' + process(l.replace(/^\d+\.\s/,'')) + '</li>';
+          return;
+        }
+        closeAll();
+        html += '<p>' + process(l) + '</p>';
+      });
+
+      closeAll();
+
+      // Add CTA
+      html += '<div class="art-cta-box"><p>Ready to start your funded trading journey? FXIFY offers evaluation programs starting from $25,000 accounts.</p><button class="btn">Get Funded with FXIFY →</button></div>';
+
+      return html || '<p>Draft content will appear here.</p>';
+    }
+
+    var previewBtn = document.getElementById('preview-editor-btn');
+    if (previewBtn) previewBtn.addEventListener('click', function(){ goTo('editor'); });
+
+    var openBtn = document.getElementById('open-editor-btn');
+    if (openBtn) openBtn.addEventListener('click', function(){ goTo('editor'); });
+
+    // Cluster btn
+    var clusterBtn = document.getElementById('cluster-btn');
+    if (clusterBtn) clusterBtn.addEventListener('click', function(){
+      var inp = document.getElementById('cluster-input');
+      var val = inp ? inp.value.trim() : '';
+      if (!val) { showToast('Enter a seed keyword first'); return; }
+      showToast('Building cluster for "'+val+'"...');
+    });
+
+    // Admin review queue
+    document.querySelectorAll('.review-back').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var card = btn.closest('.art-card');
+        if (card) { card.style.opacity='0.4'; card.style.pointerEvents='none'; }
+        showToast('Sent back to writer');
+      });
+    });
+    document.querySelectorAll('.review-approve').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var card = btn.closest('.art-card');
+        if (card) { card.style.opacity='0.4'; card.style.pointerEvents='none'; }
+        showToast('Approved — moved to Liam ✓');
+      });
+    });
+
+    // Liam buttons
+    document.querySelectorAll('.liam-back').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var card = btn.closest('.art-card');
+        if (card) { card.style.opacity='0.4'; card.style.pointerEvents='none'; }
+        showToast('Sent back to writer with SEO notes');
+      });
+    });
+    document.querySelectorAll('.liam-fwd').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var card = btn.closest('.art-card');
+        if (card) { card.style.opacity='0.4'; card.style.pointerEvents='none'; }
+        showToast('Approved — sent to David for final sign-off ✓');
+      });
+    });
+
+    // David buttons
+    document.querySelectorAll('.david-back').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var card = btn.closest('.art-card');
+        if (card) { card.style.opacity='0.4'; card.style.pointerEvents='none'; }
+        showToast('Changes requested — sent back to Sheperd');
+      });
+    });
+    document.querySelectorAll('.david-fwd').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var card = btn.closest('.art-card');
+        if (card) { card.style.opacity='0.4'; card.style.pointerEvents='none'; }
+        showToast('Final approval given — Sheperd to publish ✓');
+      });
+    });
+
+    // ── OPEN EDITOR — writer draft cards ───────────────────────────────────
+    document.querySelectorAll('.draft-card').forEach(function(card){
+      card.addEventListener('click', function(){ openEditor('writer'); });
+    });
+    document.querySelectorAll('.draft-open-btn').forEach(function(btn){
+      btn.addEventListener('click', function(e){ e.stopPropagation(); openEditor('writer'); });
+    });
+
+    // ── OPEN EDITOR — reviewer cards (admin/liam/david) ────────────────────
+    document.querySelectorAll('.review-card').forEach(function(card){
+      card.addEventListener('click', function(e){
+        if (e.target.closest('button')) return;
+        var reviewer = card.getAttribute('data-reviewer') || 'sheperd';
+        openEditor(reviewer);
+      });
+    });
+
+    // ── EDITOR OPEN FUNCTION ────────────────────────────────────────────────
+    function openEditor(role) {
+      goTo('editor');
+      var bar = document.getElementById('reviewer-bar');
+      var label = document.getElementById('reviewer-label');
+      var actions = document.getElementById('reviewer-actions');
+      var topbarActions = document.querySelector('.ed-actions');
+
+      if (role === 'writer') {
+        bar.style.display = 'none';
+        topbarActions.style.display = 'flex';
+      } else {
+        bar.style.display = 'flex';
+        topbarActions.style.display = 'none';
+
+        var configs = {
+          sheperd: {
+            label: 'Reviewing as Sheperd — 1st review',
+            color: 'var(--tealB)',
+            back: 'Send back to writer',
+            fwd:  'Approve → Liam',
+            backToast: 'Sent back to writer with your note',
+            fwdToast:  'Approved — moving to Liam for SEO review ✓'
+          },
+          liam: {
+            label: 'SEO Review — Liam',
+            color: 'var(--blue)',
+            back: 'Send back to writer',
+            fwd:  'Approve → David',
+            backToast: 'Sent back to writer with SEO notes',
+            fwdToast:  'Approved — sent to David for final sign-off ✓'
+          },
+          david: {
+            label: 'Final Approval — David Xavier',
+            color: 'var(--amber)',
+            back: 'Request changes',
+            fwd:  'Final approval ✓',
+            backToast: 'Changes requested — sent back to Sheperd',
+            fwdToast:  'Final approval given — Sheperd to publish ✓'
+          }
+        };
+
+        var cfg = configs[role] || configs.sheperd;
+        label.textContent = cfg.label;
+        label.style.color = cfg.color;
+
+        actions.innerHTML = '';
+
+        var backBtn = document.createElement('button');
+        backBtn.className = 'btn btn-danger btn-sm';
+        backBtn.textContent = cfg.back;
+        backBtn.addEventListener('click', function(){
+          openModal(cfg.back, cfg.backToast);
+        });
+
+        var fwdBtn = document.createElement('button');
+        fwdBtn.className = 'btn btn-primary btn-sm';
+        fwdBtn.textContent = cfg.fwd;
+        fwdBtn.addEventListener('click', function(){
+          showToast(cfg.fwdToast);
+          setTimeout(function(){ goTo(prevScreen); }, 1800);
+        });
+
+        actions.appendChild(backBtn);
+        actions.appendChild(fwdBtn);
+      }
+    }
+
+    // ── COMMENT MODAL ───────────────────────────────────────────────────────
+    function openModal(action, toast) {
+      var modal = document.getElementById('comment-modal');
+      var title = document.getElementById('modal-title');
+      var confirmBtn = document.getElementById('modal-confirm');
+      title.textContent = action;
+      confirmBtn.textContent = action;
+      modal.classList.add('open');
+      document.getElementById('modal-comment').focus();
+
+      confirmBtn.onclick = function(){
+        modal.classList.remove('open');
+        document.getElementById('modal-comment').value = '';
+        showToast(toast);
+        setTimeout(function(){ goTo(prevScreen); }, 1800);
+      };
+    }
+
+    var modalCancel = document.getElementById('modal-cancel');
+    if (modalCancel) modalCancel.addEventListener('click', function(){
+      document.getElementById('comment-modal').classList.remove('open');
+      document.getElementById('modal-comment').value = '';
+    });
+
+    document.getElementById('comment-modal').addEventListener('click', function(e){
+      if (e.target === this) {
+        this.classList.remove('open');
+        document.getElementById('modal-comment').value = '';
+      }
+    });
+
+    // Editor back
+    var backBtn = document.getElementById('editor-back');
+    if (backBtn) backBtn.addEventListener('click', function(){ goTo(prevScreen); });
+
+    // Editor save
+    var saveBtn = document.getElementById('editor-save');
+    if (saveBtn) saveBtn.addEventListener('click', function(){ showToast('Draft saved ✓'); });
+
+    // Editor submit (writer)
+    var submitBtn = document.getElementById('editor-submit');
+
+    // Editor submit (writer)
+    var submitBtn = document.getElementById('editor-submit');
+    if (submitBtn) submitBtn.addEventListener('click', function(){
+      showToast('Submitted for review — Sheperd notified');
+      setTimeout(function(){ goTo(prevScreen); }, 2000);
+    });
+
+    // Checklist
+    document.querySelectorAll('.check-item').forEach(function(item){
+      item.addEventListener('click', function(){
+        var cb = item.querySelector('.check-box');
+        cb.classList.toggle('checked');
+        cb.textContent = cb.classList.contains('checked') ? '✓' : '';
+      });
+    });
+
+    // PAA items
+    document.querySelectorAll('.paa-item').forEach(function(item){
+      item.addEventListener('click', function(){
+        item.classList.toggle('covered');
+        var t = item.textContent;
+        if (item.classList.contains('covered')) {
+          if (t.indexOf(' ✓') === -1) item.textContent = t + ' ✓';
+        } else {
+          item.textContent = t.replace(' ✓','');
+        }
+      });
+    });
+
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
